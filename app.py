@@ -210,6 +210,7 @@ if selected_player:
             - Distinguishing Type of shots (Layup, etc) in each zone
             - Player boxscore in each match
                 ''')
+    st.write('Thanks for visiting ! if you like the board and want to support to keep the server running you can donate to https://saweria.co/fhanavi')
 
 
         
