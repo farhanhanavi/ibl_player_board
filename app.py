@@ -1,6 +1,5 @@
 import streamlit    as st
 import pandas       as pd
-import numpy        as np
 import os
 from sqlalchemy import create_engine, text
 
@@ -17,18 +16,6 @@ from player_photo import *
 #          Load Data            #
 #                               #
 ##################################
-
-#@st.cache_data 
-#def read_data(path):
-#    return pd.read_csv(path)
-
-#Read Player Data
-#df_player                           = read_data('./dataset/ibl_gopay_2025_playerstat.csv')
-#df_player['game_minutes_timedelta'] = pd.to_timedelta('00:' + df_player['game_minutes'])
-#df_player['game_minutes_timedelta'] = df_player['game_minutes_timedelta'].apply(lambda x: x.total_seconds()/60)
-
-#Read player detail data
-#df_player_detail    = read_data('./dataset/ibl_gopay_2025_player_detail.csv')
 
 @st.cache_resource
 def get_engine(show_spinner=False):
@@ -62,6 +49,25 @@ def get_player_shots(player_name: str, season: str):
                             marker
                         FROM 
                             shot_table
+                        WHERE 
+                            player_name = :player_name
+                            AND
+                            game_type = :season
+    """)
+    df = pd.read_sql(query, engine, params={"player_name": player_name, "season": season})
+    return df
+
+
+@st.cache_data(show_spinner=False)
+def get_player_stat(player_name: str, season: str):
+
+    #Start engine vroom vroom
+    engine = get_engine()
+    query = text("""
+                        SELECT
+                            *
+                        FROM 
+                            playerstat_table
                         WHERE 
                             player_name = :player_name
                             AND
@@ -117,6 +123,7 @@ if (selected_player and selected_season):
 
     #Load Data
     player_shot_data = get_player_shots(selected_player, selected_season)
+    player_stat_data = get_player_stat(selected_player, selected_season)
 
     #Columns
     col1, col2, col3 = st.columns([1,0.1,3])
@@ -248,6 +255,12 @@ if (selected_player and selected_season):
                 st.metric(label="Successfull Shots", value=data['total_shot_made'])
                 st.metric(label="Failed Shots", value=data['total_shot_fail'])
                 st.metric(label="Shot Accuracy", value=data['shot_accuracy'])
+
+
+    #Box Score
+    player_boxscore_list = ibl_boxscore_table(player_stat_data)
+    st.dataframe(data=player_boxscore_list, use_container_width=True, hide_index=True)
+
 
     #Text
     st.header("Upcoming Patch", divider=True)
