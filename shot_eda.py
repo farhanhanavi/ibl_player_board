@@ -7,10 +7,8 @@ RESTRICTED_R    = 1.25
 THREE_R         = 6.75
 
 #Visuzalize shot
-def viz_shot(dataframe, input_player_name, zone=False):
+def viz_shot(dataframe, zone=False):
 
-    #Read Data
-    filtered_data = dataframe.query("player_name == @input_player_name")
     
     #Classify Zone
     def get_zone(x, y):
@@ -54,16 +52,16 @@ def viz_shot(dataframe, input_player_name, zone=False):
 
 
     #Classify Zone
-    filtered_data['zone'] = filtered_data.apply(lambda x: get_zone(x['adjusted_x_halfcourt_left'], x['adjusted_y_halfcourt_left']), axis=1)
+    dataframe['zone'] = dataframe.apply(lambda x: get_zone(x['adjusted_x_halfcourt_left'], x['adjusted_y_halfcourt_left']), axis=1)
 
     #Filter data by zone
     if zone:
-        filtered_data = filtered_data[filtered_data['zone'] == zone]
+        dataframe = dataframe[dataframe['zone'] == zone]
 
     #Calculate Performance
-    total_shot_attempt  = filtered_data.shape[0]
-    total_shot_made     = filtered_data[filtered_data['shot_result'] == 1].shape[0]
-    total_shot_fail     = filtered_data[filtered_data['shot_result'] != 1].shape[0]
+    total_shot_attempt  = dataframe.shape[0]
+    total_shot_made     = dataframe[dataframe['shot_result'] == 1].shape[0]
+    total_shot_fail     = dataframe[dataframe['shot_result'] != 1].shape[0]
     if total_shot_attempt > 0:
         shot_accuracy       = round((total_shot_made / total_shot_attempt) * 100, 2)
     else:
@@ -80,10 +78,10 @@ def viz_shot(dataframe, input_player_name, zone=False):
 
 
     #Draw Property
-    x             = filtered_data['adjusted_x_halfcourt_left']
-    y             = filtered_data['adjusted_y_halfcourt_left']
-    marker        = filtered_data['marker']
-    color         = filtered_data['color']
+    x             = dataframe['adjusted_x_halfcourt_left']
+    y             = dataframe['adjusted_y_halfcourt_left']
+    marker        = dataframe['marker']
+    color         = dataframe['color']
 
     #Draw court
     fig, ax = draw_court_canvas()
