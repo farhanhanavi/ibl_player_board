@@ -257,19 +257,63 @@ if (selected_player and selected_season):
                 st.metric(label="Shot Accuracy", value=data['shot_accuracy'])
 
 
+
+    #Player Performance
+    st.header("Player Performance Metric", divider=True)
+    player_performance_table = player_performance_summary(player_stat_data)
+    
+    col1, col2, col3, col4 = st.columns(4)
+
+
+    with col1:
+        st.metric(label="Total Games"           , value=player_performance_table['match_id'])
+        st.metric(label="FG Attempted"          , value=player_performance_table['game_field_goals_attempted'])
+        st.metric(label="3P Attempted"          , value=player_performance_table['game_three_pointers_attempted'])
+        st.metric(label="2P Attempted"          , value=player_performance_table['game_two_pointers_attempted'])
+        st.metric(label="FT Attempted"          , value=player_performance_table['game_free_throws_attempted'])
+        st.metric(label="Avg. Defensive Rebound"          , value=player_performance_table['game_rebounds_defensive'])
+        st.metric(label="Avg. Assist"       , value=player_performance_table['game_assists'])
+        st.metric(label="Avg. Blocks Received"       , value=player_performance_table['game_blocks_received'])
+
+    with col2:
+        st.metric(label="Avg. Minutes Played"   , value=player_performance_table['game_minutes_timedelta'])
+        st.metric(label="Successfull FG"        , value=player_performance_table['game_field_goals_made'])
+        st.metric(label="Successfull 3P"        , value=player_performance_table['game_three_pointers_made'])
+        st.metric(label="Successfull 2P"        , value=player_performance_table['game_two_pointers_made'])
+        st.metric(label="Successfull FT"        , value=player_performance_table['game_free_throws_made'])
+        st.metric(label="Avg. Offensive Rebound"          , value=player_performance_table['game_rebounds_offensive'])
+        st.metric(label="Avg. TO"           , value=player_performance_table['game_turnovers'])
+        st.metric(label="Avg. Foul"         , value=player_performance_table['game_fouls_personal'])
+        
+
+    with col3:
+        st.metric(label="Avg. Point"            , value=player_performance_table['game_points'])
+        st.metric(label="FG %"                  , value=player_performance_table['field_goal_pct'])
+        st.metric(label="3P %"                  , value=player_performance_table['3pt_pct'])
+        st.metric(label="2P %"                  , value=player_performance_table['3pt_pct'])
+        st.metric(label="FT %"                  , value=player_performance_table['ft_pct'])
+        st.metric(label="Avg. Rebound"                    , value=player_performance_table['total_rebound'])
+        st.metric(label="Avg. Steals"       , value=player_performance_table['game_steals'])
+        st.metric(label="Avg. Fouls On"     , value=player_performance_table['game_fouls_on'])
+
+    with col4:
+        st.metric(label="Avg. Point 2nd Chance" , value=player_performance_table['game_points_second_chance'])
+        st.metric(label="Avg. Blocks"       , value=player_performance_table['game_blocks'])
+    
+
     #Box Score
+    st.header("Player Match Box Score", divider=True)
     player_boxscore_list = ibl_boxscore_table(player_stat_data)
     st.dataframe(data=player_boxscore_list, use_container_width=True, hide_index=True)
-
 
     #Text
     st.header("Upcoming Patch", divider=True)
     st.write('''
             - Filter Feature (To search a certain player with shot zone capabilities)
             - ChatGPT capabilities to ask player strength / weakness
-            - Distinguishing Metric for right / left shot zone
-            - Distinguishing Type of shots (Layup, etc) in each zone
-            - Player boxscore in each match
+            - Differentiating metric for right / left shot zone
+            - Differentiating type of shots (Layup, etc) in each zone
+            - Advanced Stats
                 ''')
     st.write('Thanks for visiting ! if you like the board and want to support to keep the server running you can donate to https://saweria.co/fhanavi')
 

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 #Player Stat Box Score
 def ibl_boxscore_table(input_dataframe):
@@ -58,9 +59,14 @@ def ibl_boxscore_table(input_dataframe):
 
 
 
-def get_player_stat(dataframe, input_player_name):
+def player_performance_summary(input_dataframe):
 
-    player_stat = dataframe.query("player_name == @input_player_name").groupby('player_name').agg(
+    # Prepend hour "00:" → results in "00:32:11"
+    input_dataframe['game_minutes_timedelta'] = (input_dataframe['game_minutes'].dt.total_seconds() / 60)
+    print(input_dataframe['game_minutes'])
+    print(input_dataframe['game_minutes_timedelta'])
+
+    player_stat = input_dataframe.groupby('player_name').agg(
             {
                 'match_id'                   : 'count',
                 'game_minutes_timedelta'     : 'mean',
