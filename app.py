@@ -46,13 +46,14 @@ def get_player_list():
 
 
 @st.cache_data(show_spinner=False)
-def get_player_shots(player_name: str):
+def get_player_shots(player_name: str, season: str):
+
+    #Start engine vroom vroom
     engine = get_engine()
     query = text("""
                         SELECT
                             match_id,
-                            match_date,
-                            team_name,
+                            game_type,
                             shot_point,
                             shot_result,
                             adjusted_x_halfcourt_left,
@@ -63,8 +64,10 @@ def get_player_shots(player_name: str):
                             shot_table
                         WHERE 
                             player_name = :player_name
+                            AND
+                            game_type = :season
     """)
-    df = pd.read_sql(query, engine, params={"player_name": player_name})
+    df = pd.read_sql(query, engine, params={"player_name": player_name, "season": season})
     return df
 
 
@@ -86,15 +89,34 @@ unique_player             = get_player_list()
 #Filter Box
 selected_player = st.selectbox("Select Player", unique_player)
 
+#Gametype Toggle
+season_selectbox = st.selectbox("Game Types", ["Regular Season", "Playoff"],index=0)
+mapping = {
+    "Regular Season": "regular_season",
+    "Playoff"       : "playoffs"
+}
+selected_season = mapping[season_selectbox]
 
-if selected_player:
+
+
+
+
+##################################
+#                               #
+#          Main App             #
+#                               #
+##################################
+
+
+    
+if (selected_player and selected_season):
 
     #Sub Header
     #st.subheader(selected_player)
     st.markdown(f"<h2 style='text-align: center;'>{selected_player}</h2>", unsafe_allow_html=True)
 
     #Load Data
-    player_shot_data = get_player_shots(selected_player)
+    player_shot_data = get_player_shots(selected_player, selected_season)
 
     #Columns
     col1, col2, col3 = st.columns([1,0.1,3])

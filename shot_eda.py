@@ -9,7 +9,6 @@ THREE_R         = 6.75
 #Visuzalize shot
 def viz_shot(dataframe, zone=False):
 
-    
     #Classify Zone
     def get_zone(x, y):
         d = np.hypot(x - BASKET_X, y - BASKET_Y)
