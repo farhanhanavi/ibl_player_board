@@ -15,9 +15,9 @@ def ibl_boxscore_table(input_dataframe):
                                                         )
     input_dataframe['field_goal_pct']               = input_dataframe['field_goal_pct'].astype('str') + '%'
     
-    input_dataframe['game_two_pointers_fail']           = input_dataframe['game_two_pointers_attempted'] - input_dataframe['game_two_pointers_made']
-    input_dataframe['2pt_box']                          = ( input_dataframe['game_two_pointers_made'].astype(str)+ '-' +input_dataframe['game_two_pointers_fail'].astype(str) )
-    input_dataframe['2pt_pct']                          = np.where(
+    input_dataframe['game_two_pointers_fail']       = input_dataframe['game_two_pointers_attempted'] - input_dataframe['game_two_pointers_made']
+    input_dataframe['2pt_box']                      = ( input_dataframe['game_two_pointers_made'].astype(str)+ '-' +input_dataframe['game_two_pointers_fail'].astype(str) )
+    input_dataframe['2pt_pct']                      = np.where(
                                                             input_dataframe['game_two_pointers_attempted'] == 0, 
                                                             0, 
                                                             round(input_dataframe['game_two_pointers_made'] / input_dataframe['game_two_pointers_attempted'] * 100,2)
@@ -62,14 +62,19 @@ def ibl_boxscore_table(input_dataframe):
 def player_performance_summary(input_dataframe):
 
     # Prepend hour "00:" → results in "00:32:11"
-    input_dataframe['game_minutes_timedelta'] = (input_dataframe['game_minutes'].dt.total_seconds() / 60)
-    print(input_dataframe['game_minutes'])
+    input_dataframe['game_minutes']                 = input_dataframe['game_minutes'].astype('str')
+
+    td          = pd.to_timedelta(input_dataframe['game_minutes'])
+    components  = td.dt.components  # gives days, hours, minutes, seconds, etc.
+    print(components)
+    input_dataframe['game_minutes_timedelta'] = components['hours'] + components['minutes'] / 60.0
     print(input_dataframe['game_minutes_timedelta'])
+    
 
     player_stat = input_dataframe.groupby('player_name').agg(
             {
                 'match_id'                   : 'count',
-                'game_minutes_timedelta'     : 'mean',
+                'game_minutes_timedelta'        : 'mean',
                 
                 'game_field_goals_attempted' : 'sum',
                 'game_field_goals_made'      : 'sum',
@@ -103,9 +108,27 @@ def player_performance_summary(input_dataframe):
             }
         ).reset_index()
 
-    player_stat['field_goal_pct'] = player_stat['game_field_goals_made'] / player_stat['game_field_goals_attempted']
-    player_stat['2pt_pct']        = player_stat['game_two_pointers_made'] / player_stat['game_two_pointers_attempted']
-    player_stat['3pt_pct']        = player_stat['game_three_pointers_made'] / player_stat['game_three_pointers_attempted']
-    player_stat['ft_pct']         = player_stat['game_free_throws_made'] / player_stat['game_free_throws_attempted']
-
+    player_stat['field_goal_pct']   = np.where(
+                                                player_stat['game_field_goals_attempted'] == 0, 
+                                                0, 
+                                                round(player_stat['game_field_goals_made'] / player_stat['game_field_goals_attempted'] * 100,2)
+                                            )
+    
+    player_stat['2pt_pct']          = np.where(
+                                                player_stat['game_two_pointers_attempted'] == 0, 
+                                                0, 
+                                                round(player_stat['game_two_pointers_made'] / player_stat['game_two_pointers_attempted'] * 100,2)
+                                            )
+    player_stat['3pt_pct']          = np.where(
+                                                player_stat['game_three_pointers_attempted'] == 0, 
+                                                0, 
+                                                round(player_stat['game_three_pointers_made'] / player_stat['game_three_pointers_attempted'] * 100,2)
+                                            )
+    player_stat['ft_pct']           = np.where(
+                                                player_stat['game_free_throws_attempted'] == 0, 
+                                                0, 
+                                                round(player_stat['game_free_throws_made'] / player_stat['game_free_throws_attempted'] * 100,2)
+                                            )
+    
+    player_stat[player_stat.select_dtypes(include=['float']).columns] = player_stat.select_dtypes(include=['float']).round(2)
     return player_stat

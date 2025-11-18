@@ -314,6 +314,7 @@ if (selected_player and selected_season):
             - Differentiating metric for right / left shot zone
             - Differentiating type of shots (Layup, etc) in each zone
             - Advanced Stats
+            - Other stat (from match player motion capture)
                 ''')
     st.write('Thanks for visiting ! if you like the board and want to support to keep the server running you can donate to https://saweria.co/fhanavi')
 

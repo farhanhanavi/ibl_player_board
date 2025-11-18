@@ -298,6 +298,10 @@ def draw_court_canvas(color=False):
     #Basket Circle
     ax.plot(arc_basket_x, arc_basket_y, linewidth=2, c='black')      # the arc segment
 
+    #Hide tick
+    ax.tick_params(axis='y', left=False, labelleft=False)
+    ax.tick_params(axis='x', bottom=False, labelbottom=False)
+
 
     """
     Create a visualization of the zone system with filled colors
