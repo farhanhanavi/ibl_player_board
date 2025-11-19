@@ -66,9 +66,7 @@ def player_performance_summary(input_dataframe):
 
     td          = pd.to_timedelta(input_dataframe['game_minutes'])
     components  = td.dt.components  # gives days, hours, minutes, seconds, etc.
-    print(components)
     input_dataframe['game_minutes_timedelta'] = components['hours'] + components['minutes'] / 60.0
-    print(input_dataframe['game_minutes_timedelta'])
     
 
     player_stat = input_dataframe.groupby('player_name').agg(
