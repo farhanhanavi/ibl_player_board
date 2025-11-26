@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 #Player Stat Box Score
 def ibl_boxscore_table(input_dataframe):
-    
-    input_dataframe['game_minutes']                 = input_dataframe['game_minutes'].astype('str')
+
 
     input_dataframe['game_field_goals_failed']      = input_dataframe['game_field_goals_attempted'] - input_dataframe['game_field_goals_made']
     input_dataframe['field_goal_box']               = ( input_dataframe['game_field_goals_made'].astype(str)+ '-' +input_dataframe['game_field_goals_failed'].astype(str) )
@@ -61,12 +61,15 @@ def ibl_boxscore_table(input_dataframe):
 
 def player_performance_summary(input_dataframe):
 
-    # Prepend hour "00:" → results in "00:32:11"
-    input_dataframe['game_minutes']                 = input_dataframe['game_minutes'].astype('str')
+    #Function to change 23:10 into total seconds / total minutes
+    def get_seconds(input_text):
+        dt = datetime.strptime(input_text, "%M:%S")
+        total_seconds = dt.minute * 60 + dt.second
+        return total_seconds
 
-    td          = pd.to_timedelta(input_dataframe['game_minutes'])
-    components  = td.dt.components  # gives days, hours, minutes, seconds, etc.
-    input_dataframe['game_minutes_timedelta'] = components['hours'] + components['minutes'] / 60.0
+    # Prepend hour "00:" → results in "00:32:11"
+    input_dataframe['game_seconds']                 = input_dataframe['game_minutes'].apply(lambda x: get_seconds(x))
+    input_dataframe['game_minutes_timedelta']       = input_dataframe['game_seconds'].apply(lambda x: round(x/60,2))
     
 
     player_stat = input_dataframe.groupby('player_name').agg(
