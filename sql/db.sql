@@ -36,6 +36,39 @@ CREATE TABLE IF NOT EXISTS shot_table(
 ALTER TABLE shot_table RENAME COLUMN adjustted_x_loc TO adjusted_x_loc
 ALTER TABLE shot_table RENAME COLUMN adjustted_y_loc TO adjusted_y_loc
 
+/* Create new column /*
+ALTER TABLE shot_table
+ADD COLUMN IF NOT EXISTS adjusted_y_halfcourt_left DOUBLE PRECISION;
+
+ALTER TABLE shot_table
+ADD COLUMN IF NOT EXISTS adjusted_x_halfcourt_left DOUBLE PRECISION;
+
+ALTER TABLE shot_table
+ADD COLUMN IF NOT EXISTS color TEXT;
+
+ALTER TABLE shot_table
+ADD COLUMN IF NOT EXISTS marker TEXT;
+
+
+UPDATE shot_table
+SET
+    color = CASE
+        WHEN shot_point = 2 THEN 'blue'
+        ELSE 'orange'
+    END,
+    marker = CASE
+        WHEN shot_result = 1 THEN 'o'
+        ELSE 'x'
+    END,
+    adjusted_x_halfcourt_left = CASE
+        WHEN adjusted_x_loc < 14 THEN adjusted_x_loc
+        ELSE 28 - adjusted_x_loc
+    END,
+    adjusted_y_halfcourt_left = CASE
+        WHEN adjusted_x_loc < 14 THEN adjusted_y_loc
+        ELSE 15 - adjusted_y_loc
+    END;
+
 
 /* Check Null */
 SELECT
@@ -85,7 +118,7 @@ venue			TEXT,
 team_name		TEXT,
 home_team		TEXT,
 away_team		TEXT,
-game_minutes	INTERVAL,
+game_minutes	TEXT,
 game_field_goals_attempted			SMALLINT,
 game_field_goals_made				SMALLINT,
 game_three_pointers_attempted		SMALLINT,
@@ -110,6 +143,5 @@ field_goal_pct			DECIMAL,
 three_pointers_pct		DECIMAL,
 two_pointers_pct		DECIMAL,
 free_throws_pct			DECIMAL,
-total_rebound			SMALLINT,
-game_seconds			INTEGER	
+total_rebound			SMALLINT
 )
