@@ -86,6 +86,27 @@ def get_player_stat(player_name: str, season: str):
 
 #Page Title
 st.set_page_config(page_title='IBL Player Performance Dashboard V1',  layout='wide')
+st.markdown(""" <style>
+/* Remove the 3-dot menu */
+#MainMenu {display: none !important;}
+
+/* Remove footer */
+footer {display: none !important;}
+
+/* Remove the header bar */
+header {display: none !important;}
+
+/* 🔴 THIS removes the "None" badge */
+div[data-testid="stStatusWidget"] {
+    display: none !important;
+}
+
+/* Extra safety (some themes wrap it) */
+div[data-testid="stToolbar"] {
+    display: none !important;
+}
+</style>"""
+, unsafe_allow_html=True)
 st.title("IBL Player Performance Dashboard v1")
 
 #Playerlist
@@ -303,6 +324,16 @@ if (selected_player and selected_season):
     #Box Score
     st.header("Player Match Box Score", divider=True)
     player_boxscore_list = ibl_boxscore_table(player_stat_data)
+    st.markdown(
+                """
+                <style>
+                [data-testid="stElementToolbar"] {
+                    display: none;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
     st.dataframe(data=player_boxscore_list, use_container_width=True, hide_index=True)
 
     #Text
