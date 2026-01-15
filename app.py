@@ -86,8 +86,7 @@ def get_player_stat(player_name: str, season: str):
 
 #Page Title
 st.set_page_config(page_title='IBL Player Performance Dashboard V1',  layout='wide')
-st.title("IBL Player Performance Dashboard V1")
-st.subheader("Hi ! This board is meant for public scouting & player performance analysis")
+st.title("IBL Player Performance Dashboard v1")
 
 #Playerlist
 unique_player             = get_player_list()
