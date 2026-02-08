@@ -61,21 +61,12 @@ def ibl_boxscore_table(input_dataframe):
 
 def player_performance_summary(input_dataframe):
 
-    #Function to change 23:10 into total seconds / total minutes
-    def get_seconds(input_text):
-        dt = datetime.strptime(input_text, "%M:%S")
-        total_seconds = dt.minute * 60 + dt.second
-        return total_seconds
-
-    # Prepend hour "00:" → results in "00:32:11"
-    input_dataframe['game_seconds']                 = input_dataframe['game_minutes'].apply(lambda x: get_seconds(x))
-    input_dataframe['game_minutes_timedelta']       = input_dataframe['game_seconds'].apply(lambda x: round(x/60,2))
     
-
+    
     player_stat = input_dataframe.groupby('player_name').agg(
             {
                 'match_id'                   : 'count',
-                'game_minutes_timedelta'        : 'mean',
+                'game_minutes'               : 'mean',
                 
                 'game_field_goals_attempted' : 'sum',
                 'game_field_goals_made'      : 'sum',

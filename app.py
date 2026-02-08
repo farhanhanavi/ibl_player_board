@@ -25,15 +25,24 @@ def get_engine(show_spinner=False):
 
 
 @st.cache_data
-def get_player_list():
+def get_player_list(season_input: str):
     engine  = get_engine()
-    query   = "SELECT DISTINCT player_name FROM shot_table ORDER BY player_name;"
-    df      = pd.read_sql(query, engine)
+    query   = """
+                    SELECT 
+                        DISTINCT player_name 
+                    FROM 
+                        shot_table
+                    WHERE
+                        game_season = :season_input
+                    ORDER BY 
+                        player_name;
+                """
+    df      = pd.read_sql(query, engine, params={"season_input": season_input})
     return df["player_name"].tolist()
 
 
 @st.cache_data(show_spinner=False)
-def get_player_shots(player_name: str, season: str):
+def get_player_shots(player_name: str, season_input: str, gametype_input: str):
 
     #Start engine vroom vroom
     engine = get_engine()
@@ -52,14 +61,16 @@ def get_player_shots(player_name: str, season: str):
                         WHERE 
                             player_name = :player_name
                             AND
-                            game_type = :season
+                            game_season = :season_input
+                            AND
+                            game_type = :gametype_input
     """)
-    df = pd.read_sql(query, engine, params={"player_name": player_name, "season": season})
+    df = pd.read_sql(query, engine, params={"player_name": player_name, "season_input": season_input, "gametype_input": gametype_input})
     return df
 
 
 @st.cache_data(show_spinner=False)
-def get_player_stat(player_name: str, season: str):
+def get_player_stat(player_name: str, season_input: str, gametype_input: str):
 
     #Start engine vroom vroom
     engine = get_engine()
@@ -71,9 +82,11 @@ def get_player_stat(player_name: str, season: str):
                         WHERE 
                             player_name = :player_name
                             AND
-                            game_type = :season
+                            game_season = :season_input
+                            AND
+                            game_type = :gametype_input
     """)
-    df = pd.read_sql(query, engine, params={"player_name": player_name, "season": season})
+    df = pd.read_sql(query, engine, params={"player_name": player_name, "season_input": season_input, "gametype_input": gametype_input})
     return df
 
 
@@ -109,19 +122,28 @@ div[data-testid="stToolbar"] {
 , unsafe_allow_html=True)
 st.title("IBL Player Performance Dashboard v1")
 
-#Playerlist
-unique_player             = get_player_list()
 
-#Filter Box
+#Season Toggle
+season_selectbox = st.selectbox("IBL Season", ["IBL Gopay 2025", "IBL Gopay 2026"], index=0)
+season_mapping = {
+    "IBL Gopay 2025"    : "ibl_gopay_2025",
+    "IBL Gopay 2026"    : "ibl_gopay_2026"
+}
+selected_season = season_mapping[season_selectbox]
+
+#Player Toggle
+#Selecting player based on the season input
+unique_player   = get_player_list(selected_season)
 selected_player = st.selectbox("Select Player", unique_player)
 
+
 #Gametype Toggle
-season_selectbox = st.selectbox("Game Types", ["Regular Season", "Playoff"],index=0)
+gametype_selectbox = st.selectbox("Game Types", ["Regular Season", "Playoff"],index=0)
 mapping = {
     "Regular Season": "regular_season",
     "Playoff"       : "playoffs"
 }
-selected_season = mapping[season_selectbox]
+selected_gametype = mapping[gametype_selectbox]
 
 
 
@@ -135,7 +157,7 @@ selected_season = mapping[season_selectbox]
 
 
     
-if (selected_player and selected_season):
+if (selected_player and selected_season and selected_gametype):
 
     #Sub Header
     #st.subheader(selected_player)
@@ -286,39 +308,39 @@ if (selected_player and selected_season):
 
 
     with col1:
-        st.metric(label="Total Games"           , value=player_performance_table['match_id'])
-        st.metric(label="FG Attempted"          , value=player_performance_table['game_field_goals_attempted'])
-        st.metric(label="3P Attempted"          , value=player_performance_table['game_three_pointers_attempted'])
-        st.metric(label="2P Attempted"          , value=player_performance_table['game_two_pointers_attempted'])
-        st.metric(label="FT Attempted"          , value=player_performance_table['game_free_throws_attempted'])
-        st.metric(label="Avg. Defensive Rebound"          , value=player_performance_table['game_rebounds_defensive'])
-        st.metric(label="Avg. Assist"       , value=player_performance_table['game_assists'])
-        st.metric(label="Avg. Blocks Received"       , value=player_performance_table['game_blocks_received'])
+        st.metric(label="Total Games"                       , value=player_performance_table['match_id'])
+        st.metric(label="FG Attempted"                      , value=player_performance_table['game_field_goals_attempted'])
+        st.metric(label="3P Attempted"                      , value=player_performance_table['game_three_pointers_attempted'])
+        st.metric(label="2P Attempted"                      , value=player_performance_table['game_two_pointers_attempted'])
+        st.metric(label="FT Attempted"                      , value=player_performance_table['game_free_throws_attempted'])
+        st.metric(label="Avg. Defensive Rebound"            , value=player_performance_table['game_rebounds_defensive'])
+        st.metric(label="Avg. Assist"                       , value=player_performance_table['game_assists'])
+        st.metric(label="Avg. Blocks Received"              , value=player_performance_table['game_blocks_received'])
 
     with col2:
-        st.metric(label="Avg. Minutes Played"   , value=player_performance_table['game_minutes_timedelta'])
-        st.metric(label="Successfull FG"        , value=player_performance_table['game_field_goals_made'])
-        st.metric(label="Successfull 3P"        , value=player_performance_table['game_three_pointers_made'])
-        st.metric(label="Successfull 2P"        , value=player_performance_table['game_two_pointers_made'])
-        st.metric(label="Successfull FT"        , value=player_performance_table['game_free_throws_made'])
-        st.metric(label="Avg. Offensive Rebound"          , value=player_performance_table['game_rebounds_offensive'])
-        st.metric(label="Avg. TO"           , value=player_performance_table['game_turnovers'])
-        st.metric(label="Avg. Foul"         , value=player_performance_table['game_fouls_personal'])
+        st.metric(label="Avg. Minutes Played"               , value=player_performance_table['game_minutes_timedelta'])
+        st.metric(label="Successfull FG"                    , value=player_performance_table['game_field_goals_made'])
+        st.metric(label="Successfull 3P"                    , value=player_performance_table['game_three_pointers_made'])
+        st.metric(label="Successfull 2P"                    , value=player_performance_table['game_two_pointers_made'])
+        st.metric(label="Successfull FT"                    , value=player_performance_table['game_free_throws_made'])
+        st.metric(label="Avg. Offensive Rebound"            , value=player_performance_table['game_rebounds_offensive'])
+        st.metric(label="Avg. TO"                           , value=player_performance_table['game_turnovers'])
+        st.metric(label="Avg. Foul"                         , value=player_performance_table['game_fouls_personal'])
         
 
     with col3:
-        st.metric(label="Avg. Point"            , value=player_performance_table['game_points'])
-        st.metric(label="FG %"                  , value=player_performance_table['field_goal_pct'])
-        st.metric(label="3P %"                  , value=player_performance_table['3pt_pct'])
-        st.metric(label="2P %"                  , value=player_performance_table['3pt_pct'])
-        st.metric(label="FT %"                  , value=player_performance_table['ft_pct'])
-        st.metric(label="Avg. Rebound"                    , value=player_performance_table['total_rebound'])
-        st.metric(label="Avg. Steals"       , value=player_performance_table['game_steals'])
-        st.metric(label="Avg. Fouls On"     , value=player_performance_table['game_fouls_on'])
+        st.metric(label="Avg. Point"                , value=player_performance_table['game_points'])
+        st.metric(label="FG %"                      , value=player_performance_table['field_goal_pct'])
+        st.metric(label="3P %"                      , value=player_performance_table['3pt_pct'])
+        st.metric(label="2P %"                      , value=player_performance_table['3pt_pct'])
+        st.metric(label="FT %"                      , value=player_performance_table['ft_pct'])
+        st.metric(label="Avg. Rebound"              , value=player_performance_table['total_rebound'])
+        st.metric(label="Avg. Steals"               , value=player_performance_table['game_steals'])
+        st.metric(label="Avg. Fouls On"             , value=player_performance_table['game_fouls_on'])
 
     with col4:
-        st.metric(label="Avg. Point 2nd Chance" , value=player_performance_table['game_points_second_chance'])
-        st.metric(label="Avg. Blocks"       , value=player_performance_table['game_blocks'])
+        st.metric(label="Avg. Point 2nd Chance"     , value=player_performance_table['game_points_second_chance'])
+        st.metric(label="Avg. Blocks"               , value=player_performance_table['game_blocks'])
     
 
     #Box Score
