@@ -25,24 +25,24 @@ def get_engine(show_spinner=False):
 
 
 @st.cache_data
-def get_player_list(season_input: str):
+def get_player_list(game_season: str):
     engine  = get_engine()
-    query   = """
+    query   = text("""
                     SELECT 
                         DISTINCT player_name 
                     FROM 
                         shot_table
                     WHERE
-                        game_season = :season_input
+                        game_season = :game_season
                     ORDER BY 
                         player_name;
-                """
-    df      = pd.read_sql(query, engine, params={"season_input": season_input})
+                """)
+    df      = pd.read_sql(query, engine, params={"game_season": game_season})
     return df["player_name"].tolist()
 
 
 @st.cache_data(show_spinner=False)
-def get_player_shots(player_name: str, season_input: str, gametype_input: str):
+def get_player_shots(player_name: str, game_season: str, game_type: str):
 
     #Start engine vroom vroom
     engine = get_engine()
@@ -61,16 +61,16 @@ def get_player_shots(player_name: str, season_input: str, gametype_input: str):
                         WHERE 
                             player_name = :player_name
                             AND
-                            game_season = :season_input
+                            game_season = :game_season
                             AND
-                            game_type = :gametype_input
+                            game_type = :game_type
     """)
-    df = pd.read_sql(query, engine, params={"player_name": player_name, "season_input": season_input, "gametype_input": gametype_input})
+    df = pd.read_sql(query, engine, params={"player_name": player_name, "game_season": game_season, "game_type": game_type})
     return df
 
 
 @st.cache_data(show_spinner=False)
-def get_player_stat(player_name: str, season_input: str, gametype_input: str):
+def get_player_stat(player_name: str, game_season: str, game_type: str):
 
     #Start engine vroom vroom
     engine = get_engine()
@@ -82,11 +82,11 @@ def get_player_stat(player_name: str, season_input: str, gametype_input: str):
                         WHERE 
                             player_name = :player_name
                             AND
-                            game_season = :season_input
+                            game_season = :game_season
                             AND
-                            game_type = :gametype_input
+                            game_type = :game_type
     """)
-    df = pd.read_sql(query, engine, params={"player_name": player_name, "season_input": season_input, "gametype_input": gametype_input})
+    df = pd.read_sql(query, engine, params={"player_name": player_name, "game_season": game_season, "game_type": game_type})
     return df
 
 
@@ -134,7 +134,7 @@ selected_season = season_mapping[season_selectbox]
 #Player Toggle
 #Selecting player based on the season input
 unique_player   = get_player_list(selected_season)
-selected_player = st.selectbox("Select Player", unique_player)
+selected_player = st.selectbox("Select Player", unique_player, index=0)
 
 
 #Gametype Toggle
@@ -164,8 +164,8 @@ if (selected_player and selected_season and selected_gametype):
     st.markdown(f"<h2 style='text-align: center;'>{selected_player}</h2>", unsafe_allow_html=True)
 
     #Load Data
-    player_shot_data = get_player_shots(selected_player, selected_season)
-    player_stat_data = get_player_stat(selected_player, selected_season)
+    player_shot_data = get_player_shots(selected_player, selected_season, selected_gametype)
+    player_stat_data = get_player_stat(selected_player, selected_season, selected_gametype)
 
     #Columns
     col1, col2, col3 = st.columns([1,0.1,3])
@@ -318,7 +318,7 @@ if (selected_player and selected_season and selected_gametype):
         st.metric(label="Avg. Blocks Received"              , value=player_performance_table['game_blocks_received'])
 
     with col2:
-        st.metric(label="Avg. Minutes Played"               , value=player_performance_table['game_minutes_timedelta'])
+        st.metric(label="Avg. Minutes Played"               , value=player_performance_table['game_minutes'])
         st.metric(label="Successfull FG"                    , value=player_performance_table['game_field_goals_made'])
         st.metric(label="Successfull 3P"                    , value=player_performance_table['game_three_pointers_made'])
         st.metric(label="Successfull 2P"                    , value=player_performance_table['game_two_pointers_made'])
