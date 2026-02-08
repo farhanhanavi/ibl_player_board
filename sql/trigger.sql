@@ -1,10 +1,3 @@
-/* Adjusted Loc */
-
-ALTER TABLE shot_table ADD COLUMN IF NOT EXISTS adjusted_x_halfcourt_left DOUBLE PRECISION;
-ALTER TABLE shot_table ADD COLUMN IF NOT EXISTS adjusted_y_halfcourt_left DOUBLE PRECISION;
-ALTER TABLE shot_table ADD COLUMN IF NOT EXISTS marker TEXT;
-ALTER TABLE shot_table ADD COLUMN IF NOT EXISTS color TEXT;
-
 UPDATE shot_table
 SET
     color 						= CASE WHEN shot_point = 2 THEN 'blue' ELSE 'orange' END,
