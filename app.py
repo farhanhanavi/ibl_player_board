@@ -121,7 +121,7 @@ div[data-testid="stToolbar"] {
 </style>"""
 , unsafe_allow_html=True)
 st.title("IBL Player Performance Dashboard v1")
-
+st.text("Dasboard by Farhan Hanavi")
 
 #Season Toggle
 season_selectbox = st.selectbox("IBL Season", ["IBL Gopay 2025", "IBL Gopay 2026"], index=0)
