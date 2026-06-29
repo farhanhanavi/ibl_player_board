@@ -62,7 +62,7 @@ SELECT
 
     -- Time ex = 8:11
     p.value ->> 'sMinutes'                                AS minutes,
-    ROUND((split_part(p.value ->> 'sMinutes', ':', 1)::numeric * 60 + split_part(p.value ->> 'sMinutes', ':', 2)::numeric) / 60, 2) AS total_minutes,
+    ROUND((split_part(p.value ->> 'sMinutes', ':', 1)::numeric * 60 + split_part(p.value ->> 'sMinutes', ':', 2)::numeric) / 60, 2) AS game_minutes,
 
     -- Scoring
     (p.value ->> 'sPoints')::INT                          AS total_points,

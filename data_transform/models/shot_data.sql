@@ -62,11 +62,20 @@ raw_data AS (
 
         shot_json ->> 'player' AS player_name,
         team_name,
-        (shot_json ->> 'per')::INT AS quarter,
-        shot_json ->> 'perType'    AS period_type,
-        shot_json ->> 'actionType' AS shot_type,
-        shot_json ->> 'subType'    AS shot_subtye,
-        (shot_json ->> 'r')::INT   AS shot_result,
+        (shot_json ->> 'per')::INT                AS quarter,
+        shot_json ->> 'perType'                   AS period_type,
+        shot_json ->> 'actionType'                AS shot_type,
+	(LEFT(shot_json ->> 'actionType',1))::INT AS shot_point,
+	(shot_json ->> 'r')::INT                  AS shot_result,
+	shot_json ->> 'subType'                   AS shot_subtype,
+	CASE
+            WHEN shot_json ->> 'actionType' = '2pt' THEN 'tab:blue'
+            ELSE 'tab:orange'
+        END AS color,
+        CASE
+            WHEN (shot_json ->> 'r')::INT = 1 THEN 'o'
+            ELSE 'x'
+        END AS marker,
 
         (shot_json ->> 'x')::DOUBLE PRECISION        AS x_loc,
         (shot_json ->> 'y')::DOUBLE PRECISION        AS y_loc,
