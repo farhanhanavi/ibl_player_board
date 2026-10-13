@@ -18,26 +18,28 @@
 */
 
 WITH raw_table AS (
+
     SELECT 
         data,
         game_season,
         match_id,
-	data ->> 'match_date' AS match_date,
-	data ->> 'venue' AS venue,
-	data -> 'tm' -> '1' ->> 'name' AS home_team,
-	data -> 'tm' -> '2' ->> 'name' AS away_team
+        data ->> 'match_date' AS match_date,
+        data ->> 'venue' AS venue,
+        data -> 'tm' -> '1' ->> 'name' AS home_team,
+        data -> 'tm' -> '2' ->> 'name' AS away_team
     FROM 
         {{ source('source_raw_matchdata','raw_matchdata') }}
 ),
 
 teams AS (
+    
     SELECT
         rt.match_id,
         rt.game_season,
-	rt.match_date,
-	rt.venue,
-	rt.home_team,
-	rt.away_team,
+        rt.match_date,
+        rt.venue,
+        rt.home_team,
+        rt.away_team,
         team.value ->> 'nameInternational'           AS team_name,
         team.value -> 'pl'                           AS players_json
     FROM 
