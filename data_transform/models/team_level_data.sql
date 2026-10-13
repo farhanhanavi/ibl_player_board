@@ -9,8 +9,6 @@
 SELECT
     match_id                                AS match_id_new,
     game_season                             AS game_season_new,
-    data ->> 'match_id'                     AS match_id,
-    data ->> 'game_season'                  AS game_season,
     data ->> 'match_date'                   AS match_date,
     data ->> 'venue'                        AS venue,
     data -> 'tm' -> '1' ->> 'name'          AS home_name,
@@ -56,6 +54,7 @@ SELECT
     (team.value ->> 'tot_sReboundsTeamOffensive')::INT  AS oreb,
 
     (team.value ->> 'tot_sTurnovers')::INT      AS turnovers,
+    (team.value ->> 'tot_sTurnoversTeam')::INT  AS turnovers_team,
     (team.value ->> 'tot_sFoulsTeam')::INT      AS fouls,
     (team.value ->> 'tot_sFoulsOn')::INT        AS fouls_on,
     (team.value ->> 'tot_sSteals')::INT         AS steals,
