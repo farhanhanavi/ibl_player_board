@@ -12,9 +12,9 @@ WITH raw_table AS (
         data ->> 'match_date'                           AS match_date,
         data ->> 'venue'                                AS venue,
         data -> 'tm' -> '1' ->> 'name'                  AS home_team,
-        (data -> 'tm' -> '1' ->> 'full_score')::INT     AS home_point,
+        data -> 'tm' -> '1' ->> 'full_score'::INT     AS home_point,
         data -> 'tm' -> '2' ->> 'name'                  AS away_team,
-        (data -> 'tm' -> '1' ->> 'full_score')::INT     AS away_point
+        data -> 'tm' -> '1' ->> 'full_score'::INT     AS away_point
     FROM 
         {{ source('source_raw_matchdata','raw_matchdata') }}
 )
@@ -23,8 +23,10 @@ SELECT
     rt.match_date,
     rt.game_season,
     CASE
-        WHEN LOWER(game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', match_date::DATE) >= '2025-06-26' THEN 'playoff'
-        WHEN LOWER(game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', match_date::DATE) < '2025-06-26'  THEN 'regular_season'
+        WHEN LOWER(game_season) = 'ibl_gopay_2025' AND DATE_TRUNC('DAY', match_date::DATE) < '2025-06-26'  THEN 'regular_season'
+        WHEN LOWER(game_season) = 'ibl_gopay_2025' AND DATE_TRUNC('DAY', match_date::DATE) >= '2025-06-26' THEN 'playoff'
+        WHEN LOWER(game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', match_date::DATE) < '2026-05-23'  THEN 'regular_season'
+        WHEN LOWER(game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', match_date::DATE) >= '2026-05-23' THEN 'playoff'
         ELSE 'undefined'
     END AS game_type,
     rt.venue,
