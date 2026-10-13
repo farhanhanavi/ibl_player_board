@@ -51,7 +51,7 @@ SELECT
 
     (team.value ->> 'tot_sReboundsTotal')::INT          AS total_rebound,
     (team.value ->> 'tot_sReboundsDefensive')::INT      AS drb,
-    (team.value ->> 'tot_sReboundsOffensive')::INT      AS orb,
+    (team.value ->> 'tot_sReboundsOffensive')::INT      AS oreb,
     (team.value ->> 'tot_sReboundsTeamDefensive')::INT  AS drb_team,
     (team.value ->> 'tot_sReboundsTeamOffensive')::INT  AS oreb_team,
 
