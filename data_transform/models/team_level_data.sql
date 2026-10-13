@@ -49,9 +49,11 @@ SELECT
 
     (team.value ->> 'tot_sAssists')::INT        AS assists,
 
-    (team.value ->> 'tot_sReboundsTeam')::INT           AS total_rebound,
-    (team.value ->> 'tot_sReboundsTeamDefensive')::INT  AS drb,
-    (team.value ->> 'tot_sReboundsTeamOffensive')::INT  AS oreb,
+    (team.value ->> 'tot_sReboundsTotal')::INT          AS total_rebound,
+    (team.value ->> 'tot_sReboundsDefensive')::INT      AS drb,
+    (team.value ->> 'tot_sReboundsOffensive')::INT      AS orb,
+    (team.value ->> 'tot_sReboundsTeamDefensive')::INT  AS drb_team,
+    (team.value ->> 'tot_sReboundsTeamOffensive')::INT  AS oreb_team,
 
     (team.value ->> 'tot_sTurnovers')::INT      AS turnovers,
     (team.value ->> 'tot_sTurnoversTeam')::INT  AS turnovers_team,
