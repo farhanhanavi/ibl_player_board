@@ -8,6 +8,7 @@
 WITH game_data AS (
 
 	SELECT
+        game_season,
 		home_team					AS team_name,
 		SUM(home_point) 			AS point_scored,
 		SUM(away_point)				AS point_conceeded,
@@ -19,11 +20,12 @@ WITH game_data AS (
 	WHERE
 		game_type = 'regular_season'
 	GROUP BY
-		1
+		1,2
 
 	UNION ALL
 
 	SELECT
+        game_season,
 		away_team					AS team_name,
 		SUM(away_point) 			AS point_scored,
 		SUM(home_point)				AS point_conceeded,
@@ -35,9 +37,10 @@ WITH game_data AS (
 	WHERE
 		game_type = 'regular_season'
 	GROUP BY
-		1
+		1,2
 )
 SELECT
+    gd.game_season,
 	gd.team_name,
 	SUM(total_match)  AS total_match,
 	SUM(total_win)	  AS total_win,
@@ -49,7 +52,8 @@ SELECT
 FROM	
 	game_data gd
 GROUP BY
-	1
+	1,2
 ORDER BY
+    game_season,
 	total_pts DESC,
 	point_diff DESC
