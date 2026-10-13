@@ -14,7 +14,7 @@ WITH raw_table AS (
         data -> 'tm' -> '1' ->> 'name'                  AS home_team,
         data -> 'tm' -> '1' ->> 'full_score'            AS home_point,
         data -> 'tm' -> '2' ->> 'name'                  AS away_team,
-        data -> 'tm' -> '1' ->> 'full_score'            AS away_point
+        data -> 'tm' -> '2' ->> 'full_score'            AS away_point
     FROM 
         {{ source('source_raw_matchdata','raw_matchdata') }}
 )
