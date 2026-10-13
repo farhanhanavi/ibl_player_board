@@ -7,8 +7,8 @@
 }}
 
 SELECT
-    match_id                                AS match_id_new,
-    game_season                             AS game_season_new,
+    match_id                                AS match_id,
+    game_season                             AS game_season,
     data ->> 'match_date'                   AS match_date,
     data ->> 'venue'                        AS venue,
     data -> 'tm' -> '1' ->> 'name'          AS home_name,
