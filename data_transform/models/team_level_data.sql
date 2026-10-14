@@ -91,11 +91,11 @@ SELECT
     CASE
         WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.home_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
         ELSE base.home_name
-    END AS home_name
+    END AS home_name,
     CASE
         WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.away_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
         ELSE base.away_name
-    END AS away_name
+    END AS away_name,
     CASE
         WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.team_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
         ELSE base.team_name
