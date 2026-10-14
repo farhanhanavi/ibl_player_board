@@ -48,12 +48,28 @@ teams AS (
 )
 SELECT
     t.match_id,
-    t.game_season,
     t.match_date,
+    t.game_season,
+    CASE
+        WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND DATE_TRUNC('DAY', t.match_date::DATE) < '2025-06-26'  THEN 'regular_season'
+        WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND DATE_TRUNC('DAY', t.match_date::DATE) >= '2025-06-26' THEN 'playoff'
+        WHEN LOWER(t.game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', t.match_date::DATE) < '2026-05-23'  THEN 'regular_season'
+        WHEN LOWER(t.game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', t.match_date::DATE) >= '2026-05-23' THEN 'playoff'
+        ELSE 'undefined'
+    END AS game_type,
     t.venue,
-    t.home_team,
-    t.away_team,
-    t.team_name,
+    CASE
+        WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND t.home_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE t.home_name
+    END AS home_name
+    CASE
+        WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND t.away_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE t.away_name
+    END AS away_name
+    CASE
+        WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND t.team_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE t.team_name
+    END AS team_name,
 
     -- Player identity
     p.value ->> 'name'                                    AS player_name,

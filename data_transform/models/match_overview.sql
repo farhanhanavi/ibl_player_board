@@ -30,8 +30,14 @@ SELECT
         ELSE 'undefined'
     END AS game_type,
     rt.venue,
-    rt.home_team,
-    rt.away_team,
+    CASE
+        WHEN LOWER(game_season) = 'ibl_gopay_2025' AND rt.home_team = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE rt.home_team
+    END AS home_team,
+    CASE
+        WHEN LOWER(game_season) = 'ibl_gopay_2025' AND rt.away_team = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE rt.away_team
+    END AS away_team,
     rt.home_point::INT  AS home_point,
     rt.away_point::INT  AS away_point,
     CASE

@@ -5,8 +5,10 @@
 WITH cte AS (
 
     SELECT
-        data ->> 'match_id'            AS match_id,
-        data ->> 'game_season'         AS game_season,
+        --data ->> 'match_id'            AS match_id,
+        --data ->> 'game_season'         AS game_season,
+        match_id                       AS match_id,
+        game_season                    AS game_season,
         data ->> 'match_date'          AS match_date,
         data ->> 'venue'               AS match_venue,
         data -> 'tm' -> '1' ->> 'name' AS home_team,
@@ -53,15 +55,30 @@ shots AS (
 raw_data AS (
 
     SELECT
-        match_id,
-        game_season,
-        match_date,
-        match_venue,
-        home_team,
-        away_team,
-
+        shots.match_id,
+        shots.match_date,
+        shots.game_season,
+        CASE
+            WHEN LOWER(shots.game_season) = 'ibl_gopay_2025' AND DATE_TRUNC('DAY', shots.match_date::DATE) < '2025-06-26'  THEN 'regular_season'
+            WHEN LOWER(shots.game_season) = 'ibl_gopay_2025' AND DATE_TRUNC('DAY', shots.match_date::DATE) >= '2025-06-26' THEN 'playoff'
+            WHEN LOWER(shots.game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', shots.match_date::DATE) < '2026-05-23'  THEN 'regular_season'
+            WHEN LOWER(shots.game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', shots.match_date::DATE) >= '2026-05-23' THEN 'playoff'
+            ELSE 'undefined'
+        END AS game_type,
+        shots.match_venue,
+        CASE
+            WHEN LOWER(shots.game_season) = 'ibl_gopay_2025' AND shots.home_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+            ELSE shots.home_name
+        END AS home_name
+        CASE
+            WHEN LOWER(shots.game_season) = 'ibl_gopay_2025' AND shots.away_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+            ELSE shots.away_name
+        END AS away_name
         shot_json ->> 'player' AS player_name,
-        team_name,
+        CASE
+            WHEN LOWER(shots.game_season) = 'ibl_gopay_2025' AND shots.team_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+            ELSE shots.team_name
+        END AS team_name,
         (shot_json ->> 'per')::INT                AS quarter,
         shot_json ->> 'perType'                   AS period_type,
         shot_json ->> 'actionType'                AS shot_type,

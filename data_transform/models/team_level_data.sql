@@ -6,6 +6,8 @@
 
 }}
 
+WITH base AS (
+
 SELECT
     match_id                                AS match_id,
     game_season                             AS game_season,
@@ -72,5 +74,76 @@ SELECT
 FROM
     {{source('source_raw_matchdata','raw_matchdata')}}
     CROSS JOIN LATERAL jsonb_each(data -> 'tm') AS team
+
+)
+SELECT
+    base.match_id,
+    base.match_date,
+    base.game_season,
+    CASE
+        WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND DATE_TRUNC('DAY', base.match_date::DATE) < '2025-06-26'  THEN 'regular_season'
+        WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND DATE_TRUNC('DAY', base.match_date::DATE) >= '2025-06-26' THEN 'playoff'
+        WHEN LOWER(base.game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', base.match_date::DATE) < '2026-05-23'  THEN 'regular_season'
+        WHEN LOWER(base.game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', base.match_date::DATE) >= '2026-05-23' THEN 'playoff'
+        ELSE 'undefined'
+    END AS game_type,
+    base.venue,
+    CASE
+        WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.home_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE base.home_name
+    END AS home_name
+    CASE
+        WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.away_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE base.away_name
+    END AS away_name
+    CASE
+        WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.team_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE base.team_name
+    END AS team_name,
+    base.minutes,
+    base.total_minutes,
+    base.total_score,
+    base.q1_score,
+    base.q2_score,
+    base.q3_score,
+    base.q4_score,
+    base.total_points,
+    base.total_points_bench,
+    base.total_points_fastbreak,
+    base.total_points_secondchance,
+    base.total_points_fromturnovers,
+    base.total_paint,
+    base.two_pa,
+    base.two_pm,
+    base.two_pct,
+    base.three_pa,
+    base.three_pm,
+    base.three_pct,
+    base.fga,
+    base.fgm,
+    base.fg_pct,
+    base.fta,
+    base.ftm,
+    base.ft_pct,
+    base.assists,
+    base.total_rebound,
+    base.drb,
+    base.oreb,
+    base.drb_team,
+    base.oreb_team,
+    base.turnovers,
+    base.turnovers_team,
+    base.fouls,
+    base.fouls_on,
+    base.steals,
+    base.blocks,
+    base.bench_points,
+    base.biggest_lead,
+    base.lead_changes,
+    base.time_leading,
+    base.coach
+FROM
+    base
 ORDER BY
+    game_season,
     match_date
