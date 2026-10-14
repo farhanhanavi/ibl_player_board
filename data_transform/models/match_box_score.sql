@@ -59,13 +59,13 @@ SELECT
     END AS game_type,
     t.venue,
     CASE
-        WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND t.home_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
-        ELSE t.home_name
-    END AS home_name,
+        WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND t.home_team = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE t.home_team
+    END AS home_team,
     CASE
-        WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND t.away_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
-        ELSE t.away_name
-    END AS away_name,
+        WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND t.away_team = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE t.away_team
+    END AS away_team,
     CASE
         WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND t.team_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
         ELSE t.team_name

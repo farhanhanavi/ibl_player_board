@@ -67,13 +67,13 @@ raw_data AS (
         END AS game_type,
         shots.match_venue,
         CASE
-            WHEN LOWER(shots.game_season) = 'ibl_gopay_2025' AND shots.home_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
-            ELSE shots.home_name
-        END AS home_name,
+            WHEN LOWER(shots.game_season) = 'ibl_gopay_2025' AND shots.home_team = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+            ELSE shots.home_team
+        END AS home_team,
         CASE
-            WHEN LOWER(shots.game_season) = 'ibl_gopay_2025' AND shots.away_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
-            ELSE shots.away_name
-        END AS away_name,
+            WHEN LOWER(shots.game_season) = 'ibl_gopay_2025' AND shots.away_team = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+            ELSE shots.away_team
+        END AS away_team,
         shot_json ->> 'player' AS player_name,
         CASE
             WHEN LOWER(shots.game_season) = 'ibl_gopay_2025' AND shots.team_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'

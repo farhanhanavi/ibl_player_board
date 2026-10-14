@@ -13,8 +13,8 @@ SELECT
     game_season                             AS game_season,
     data ->> 'match_date'                   AS match_date,
     data ->> 'venue'                        AS venue,
-    data -> 'tm' -> '1' ->> 'name'          AS home_name,
-    data -> 'tm' -> '2' ->> 'name'          AS away_name,
+    data -> 'tm' -> '1' ->> 'name'          AS home_team,
+    data -> 'tm' -> '2' ->> 'name'          AS away_team,
     
     (team.value ->> 'name')                     AS team_name,
     (team.value ->> 'tot_sMinutes')             AS minutes,
@@ -89,13 +89,13 @@ SELECT
     END AS game_type,
     base.venue,
     CASE
-        WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.home_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
-        ELSE base.home_name
-    END AS home_name,
+        WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.home_team = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE base.home_team
+    END AS home_team,
     CASE
-        WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.away_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
-        ELSE base.away_name
-    END AS away_name,
+        WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.away_team = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
+        ELSE base.away_team
+    END AS away_team,
     CASE
         WHEN LOWER(base.game_season) = 'ibl_gopay_2025' AND base.team_name = 'Pelita Jaya Jakarta' THEN 'Pelita Jaya Basketball Jakarta'
         ELSE base.team_name
