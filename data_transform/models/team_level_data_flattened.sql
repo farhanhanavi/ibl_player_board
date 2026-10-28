@@ -82,8 +82,8 @@ SELECT
     base.opp_total_drb / (base.opp_total_drb + base.total_oreb)		AS opp_drb_perc,
 
     -- FTA %
-    base.fta / base.fga                 AS ftr
-    base.opp_fta / base.opp_fga	AS opp_ftr
+    base.fta / base.fga                 AS ftr,
+    base.opp_fta / base.opp_fga	        AS opp_ftr
 FROM
     base
 ORDER BY
