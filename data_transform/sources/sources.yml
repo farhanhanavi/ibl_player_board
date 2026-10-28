@@ -1,7 +1,21 @@
 version : 2
 
+
+################
+#  
+# Raw Data
+# 
+###############
+
 sources:
   - name : source_raw_matchdata
     schema : public
     tables :
     - name : raw_matchdata
+
+
+
+  - name : source_team_level_data
+    schema : dbt_schema
+    tables :
+    - name : team_level_data
