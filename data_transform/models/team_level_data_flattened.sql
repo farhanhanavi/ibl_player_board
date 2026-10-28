@@ -10,6 +10,8 @@ WITH base AS (
 
 SELECT
     home.match_id,
+    home.match_date,
+    home.game_season,
     home.team_name,
     away.team_name                          AS away_team,
     --home_team data
@@ -93,5 +95,5 @@ SELECT
 FROM
     base
 ORDER BY
-    game_season,
-    match_date
+    base.game_season,
+    base.match_date
