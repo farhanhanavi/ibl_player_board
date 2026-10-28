@@ -12,6 +12,7 @@ SELECT
     home.match_id,
     home.match_date,
     home.game_season,
+    home.game_type,
     home.team_name,
     away.team_name                          AS away_team,
     --home_team data
@@ -70,8 +71,6 @@ LEFT JOIN
 	{{ source('source_team_level_data','team_level_data') }} away
     ON home.match_id = away.match_id
     AND home.team_name <> away.team_name
-WHERE
-    home.game_type = 'regular_season'
 
 )
 SELECT
