@@ -64,6 +64,12 @@ SELECT
     away.total_paint                       AS opp_total_point
 FROM
     {{ source('source_team_level_data','team_level_data') }} home
+LEFT JOIN
+	{{ source('source_team_level_data','team_level_data') }} away
+    ON home.match_id = away.match_id
+    AND home.team_name <> away.team_name
+WHERE
+    home.game_type = 'regular_season'
 
 )
 SELECT
