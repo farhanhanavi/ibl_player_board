@@ -64,7 +64,7 @@ SELECT
     away.total_points_fastbreak            AS opp_total_points_fastbreak,
     away.total_points_secondchance         AS opp_total_points_secondchance,
     away.total_points_fromturnovers        AS opp_total_points_fromturnovers,
-    away.total_paint                       AS opp_total_point
+    away.total_paint                       AS opp_total_paint
 FROM
     {{ source('source_team_level_data','team_level_data') }} home
 LEFT JOIN
