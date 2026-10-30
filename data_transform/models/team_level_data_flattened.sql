@@ -90,7 +90,13 @@ SELECT
 
     -- FTA %
     base.fta / base.fga                 AS ftr,
-    base.opp_fta / base.opp_fga	        AS opp_ftr
+    base.opp_fta / base.opp_fga	        AS opp_ftr,
+
+    -- Win Status
+    CASE
+        WHEN base.total_score > base.opp_total_score THEN 1
+        ELSE 0
+    END AS is_win
 FROM
     base
 ORDER BY
