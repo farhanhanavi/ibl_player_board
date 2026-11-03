@@ -64,8 +64,9 @@ st.text("Dasboard by Farhan Hanavi")
 #Season Toggle
 season_selectbox = st.selectbox("IBL Season", ["IBL Gopay 2025", "IBL Gopay 2026"], index=0)
 season_mapping = {
-    "IBL Gopay 2025"    : "ibl_gopay_2025",
-    "IBL Gopay 2026"    : "ibl_gopay_2026"
+    "IBL Gopay 2025"            : "ibl_gopay_2025",
+    "IBL Gopay 2026"            : "ibl_gopay_2026",
+    "IBL All Indonesian 2026"   : "ibl_all_indonesian_2026"
 }
 selected_season = season_mapping[season_selectbox]
 
