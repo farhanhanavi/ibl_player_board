@@ -22,6 +22,7 @@ WITH raw_table AS (
     SELECT 
         data,
         game_season,
+        game_type,
         match_id,
         data ->> 'match_date' AS match_date,
         data ->> 'venue' AS venue,
