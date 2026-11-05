@@ -22,12 +22,12 @@ WITH raw_table AS (
     SELECT 
         data,
         game_season,
-        game_type,
+        data -> 'game_type'             AS game_type,
         match_id,
-        data ->> 'match_date' AS match_date,
+        data ->> 'match_date'           AS match_date,
         data ->> 'venue' AS venue,
-        data -> 'tm' -> '1' ->> 'name' AS home_team,
-        data -> 'tm' -> '2' ->> 'name' AS away_team
+        data -> 'tm' -> '1' ->> 'name'  AS home_team,
+        data -> 'tm' -> '2' ->> 'name'  AS away_team
     FROM 
         {{ source('source_raw_matchdata','raw_matchdata') }}
 ),
