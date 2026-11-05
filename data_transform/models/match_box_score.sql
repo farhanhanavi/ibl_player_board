@@ -36,6 +36,7 @@ teams AS (
     SELECT
         rt.match_id,
         rt.game_season,
+        rt.game_type,
         rt.match_date,
         rt.venue,
         rt.home_team,
@@ -55,7 +56,7 @@ SELECT
         WHEN LOWER(t.game_season) = 'ibl_gopay_2025' AND DATE_TRUNC('DAY', t.match_date::DATE) >= '2025-06-26' THEN 'playoff'
         WHEN LOWER(t.game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', t.match_date::DATE) < '2026-05-23'  THEN 'regular_season'
         WHEN LOWER(t.game_season) = 'ibl_gopay_2026' AND DATE_TRUNC('DAY', t.match_date::DATE) >= '2026-05-23' THEN 'playoff'
-        ELSE 'undefined'
+        ELSE t.game_type
     END AS game_type,
     t.venue,
     CASE
