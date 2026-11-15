@@ -186,5 +186,9 @@ INNER JOIN
     team_side b
     ON  b.match_id = a.match_id
     AND a.team_no <> b.team_no
+WHERE
+    a.team_no IN ('1','2')
+    AND
+    b.team_no IN ('1','2')
 ORDER BY
     match_id
