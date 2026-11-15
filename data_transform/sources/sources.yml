@@ -19,3 +19,8 @@ sources:
     schema : dbt_schema
     tables :
     - name : team_level_data
+
+  - name : source_epc_team_level_data
+    schema : dbt_schema
+    tables :
+    - name : epc_team_level_data
