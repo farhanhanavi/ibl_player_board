@@ -1,6 +1,6 @@
 {{
     config(
-            materialized = 'view',
+            materialized = 'table',
             alias        = 'epc_team_season_level_data'
         )
 }}
@@ -108,7 +108,7 @@ agg AS (
         SUM(opp_blocks)                     AS opp_blocks
 
     FROM
-        {{ ref('source_team_level_data', 'epc_team_level_data') }}
+        {{ ref('epc_team_level_data') }}
     GROUP BY
         GROUPING SETS ((game_season, team_abr), (game_season))
 
