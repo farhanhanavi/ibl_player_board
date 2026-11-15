@@ -9,3 +9,5 @@ __pycache__/
 venv/
 dataset/*
 ibl_match_data/*
+*.log
+/log

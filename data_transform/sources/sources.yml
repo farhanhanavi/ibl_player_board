@@ -1,0 +1,14 @@
+version : 2
+
+
+################
+#  
+# Raw Data
+# 
+###############
+
+sources:
+  - name : source_raw_matchdata
+    schema : public
+    tables :
+    - name : raw_matchdata
