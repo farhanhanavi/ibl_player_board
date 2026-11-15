@@ -23,4 +23,4 @@ sources:
   - name : source_epc_team_level_data
     schema : dbt_schema
     tables :
-    - name : epc_team_level_data
+    - name : epc_team_season_level_data
