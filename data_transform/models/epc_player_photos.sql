@@ -64,8 +64,7 @@ ranked AS (
 
     SELECT
         player_photos.*,
-        ROW_NUMBER() OVER (PARTITION BY team_abr, LOWER(first_name), LOWER(family_name) ORDER BY (photo_url IS NULL), match_date DESC, match_id DESC) AS rn,
-        ROW_NUMBER() OVER (PARTITION BY player_name ORDER BY LENGTH(first_name) DESC) AS dedup_rn
+        ROW_NUMBER() OVER (PARTITION BY team_abr, LOWER(first_name), LOWER(family_name) ORDER BY (photo_url IS NULL), match_date DESC, match_id DESC) AS rn
     FROM
         player_photos
     WHERE
@@ -83,20 +82,29 @@ final AS (
         shirt_number,
         position,
         photo_url,
-        photo_thumb_url
+        photo_thumb_url,
+        ROW_NUMBER() OVER (PARTITION BY player_name ORDER BY LENGTH(first_name) DESC) AS dedup_rn
         --match_id        AS source_match_id,
         --match_date      AS source_match_date
     FROM
         ranked
     WHERE
         rn = 1
-        AND
-        dedup_rn = 1
     ORDER BY
         team_abr,
         family_name
 )
 SELECT
-    *
+    player_key,
+    team_abr,
+    first_name,
+    family_name,
+    player_name,
+    shirt_number,
+    position,
+    photo_url,
+    photo_thumb_url
 FROM
     final
+WHERE
+    dedu_rn = 1
