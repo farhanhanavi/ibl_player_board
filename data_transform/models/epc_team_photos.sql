@@ -16,7 +16,7 @@ WITH base AS (
         (r.data ->> 'match_date')::DATE     AS match_date,
         r.data                              AS j
     FROM
-        {{ ref('epc_team_level_data') }} r
+        {{ source('source_raw_matchdata', 'raw_matchdata') }} r
 		-- public.raw_matchdata r
     WHERE
         r.game_season = 'elite_pro_championship_2026'
