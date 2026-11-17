@@ -107,4 +107,4 @@ SELECT
 FROM
     final
 WHERE
-    dedu_rn = 1
+    dedup_rn = 1
