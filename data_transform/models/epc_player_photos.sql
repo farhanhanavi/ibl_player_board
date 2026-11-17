@@ -64,7 +64,7 @@ ranked AS (
 
     SELECT
         player_photos.*,
-        ROW_NUMBER() OVER (PARTITION BY team_abr, LOWER(first_name), LOWER(family_name) ORDER BY (photo_url IS NULL), match_date DESC, match_id DESC)) AS rn,
+        ROW_NUMBER() OVER (PARTITION BY team_abr, LOWER(first_name), LOWER(family_name) ORDER BY (photo_url IS NULL), match_date DESC, match_id DESC) AS rn,
         ROW_NUMBER() OVER (PARTITION BY player_name ORDER BY LENGTH(first_name) DESC) AS dedup_rn
     FROM
         player_photos
