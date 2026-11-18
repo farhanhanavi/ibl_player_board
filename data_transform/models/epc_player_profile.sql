@@ -67,10 +67,10 @@ player_rows AS (
 ranked AS (
 
     SELECT
-        player_photos.*,
+        player_rows.*,
         ROW_NUMBER() OVER (PARTITION BY team_abr, LOWER(first_name), LOWER(family_name) ORDER BY (photo_url IS NULL), match_date DESC, match_id DESC) AS rn
     FROM
-        player_photos
+        player_rows
     WHERE
         team_abr IS NOT NULL
 
