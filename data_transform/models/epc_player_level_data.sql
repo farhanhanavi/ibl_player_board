@@ -29,8 +29,8 @@ WITH base AS (
         (r.data -> 'tm' -> '2' ->> 'name')      AS away_team,
         r.data                                  AS j
     FROM
-        -- {{ source('source_raw_matchdata', 'raw_matchdata') }} r
-		public.raw_matchdata r
+        {{ source('source_raw_matchdata', 'raw_matchdata') }} r
+		-- public.raw_matchdata r
     WHERE
         r.game_season = 'elite_pro_championship_2026'
 
@@ -137,12 +137,12 @@ SELECT
 FROM
     players p
 LEFT JOIN
-    -- {{ ref('epc_team_profile') }} tp
-	dbt_schema.epc_team_profile tp
+    {{ ref('epc_team_profile') }} tp
+	-- dbt_schema.epc_team_profile tp
     ON LOWER(tp.team_name) = LOWER(TRIM(p.team_name))
 LEFT JOIN
-    -- {{ ref('epc_player_profile') }} pp
-	dbt_schema.epc_player_profile pp
+    {{ ref('epc_player_profile') }} pp
+	-- dbt_schema.epc_player_profile pp
     ON LOWER(pp.player_name) = LOWER(p.player_name)
 ORDER BY
     p.match_id,
