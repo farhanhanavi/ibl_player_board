@@ -44,7 +44,6 @@ player_rows AS (
         teams.match_id,
         teams.match_date,
 		tp.team_name,
-		tp.team_name
 		tp.team_abr,
         
         TRIM(p.value ->> 'firstName')                   AS first_name,
