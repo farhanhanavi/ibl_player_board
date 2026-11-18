@@ -29,8 +29,8 @@ WITH base AS (
         (r.data -> 'tm' -> '2' ->> 'name')      AS away_team,
         r.data                                  AS j
     FROM
-        -- {{ source('source_raw_matchdata', 'raw_matchdata') }} r
-		public.raw_matchdata r
+        {{ source('source_raw_matchdata', 'raw_matchdata') }} r
+		-- public.raw_matchdata r
     WHERE
         r.game_season = 'elite_pro_championship_2026'
 
@@ -123,7 +123,6 @@ SELECT
     p.home_team,
     p.away_team,
     p.team_name,
-    p.opp_team_name,
     p.pno,
     p.player_name,
     p.is_starter,
