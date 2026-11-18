@@ -18,8 +18,8 @@ WITH base AS (
         (r.data ->> 'match_date')::DATE     AS match_date,
         r.data                              AS j
     FROM
-        -- {{ source('source_raw_matchdata', 'raw_matchdata') }} r
-		public.raw_matchdata r
+        {{ source('source_raw_matchdata', 'raw_matchdata') }} r
+		-- public.raw_matchdata r
     WHERE
         r.game_season = 'elite_pro_championship_2026'
 
@@ -57,8 +57,8 @@ player_rows AS (
     FROM
         teams
 	INNER JOIN
-		--{{ ref('epc_team_profile') }} tp
-		dbt_schema.
+		{{ ref('epc_team_profile') }} tp
+		-- dbt_schema.epc_team_profile
 		ON LOWER(tp.team_name) = LOWER(teams.team_name)
     CROSS JOIN
         LATERAL jsonb_each(teams.pl) AS p (key, value)
