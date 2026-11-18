@@ -56,7 +56,7 @@ player_rows AS (
         NULLIF(p.value ->> 'photoT', '')                AS photo_thumb_url
     FROM
         teams
-	INNER JOIN
+	LEFT JOIN
 		{{ ref('epc_team_profile') }} tp
 		-- dbt_schema.epc_team_profile
 		ON LOWER(tp.team_name) = LOWER(teams.team_name)
@@ -74,34 +74,11 @@ ranked AS (
     WHERE
         team_abr IS NOT NULL
 
-),
-final AS (
-
-    SELECT
-        MD5(team_abr || '|' || LOWER(first_name) || '|' || LOWER(family_name)) AS player_key,
-		team_id,
-		team_name,
-        team_abr,
-        first_name,
-        family_name,
-        player_name,
-        shirt_number,
-        position,
-        photo_url,
-        photo_thumb_url,
-        ROW_NUMBER() OVER (PARTITION BY player_name ORDER BY LENGTH(first_name) DESC) AS dedup_rn
-    FROM
-        ranked
-    WHERE
-        rn = 1
-    ORDER BY
-        team_abr,
-        family_name
 )
-SELECT
-    player_key,
-	team_id,
-	team_name,
+SELECT DISTINCT
+    MD5(team_abr || '|' || LOWER(first_name) || '|' || LOWER(family_name)) AS player_id,
+    team_id,
+    team_name,
     team_abr,
     first_name,
     family_name,
@@ -111,6 +88,9 @@ SELECT
     photo_url,
     photo_thumb_url
 FROM
-    final
+    ranked
 WHERE
-    dedup_rn = 1
+    rn = 1
+ORDER BY
+    team_abr,
+    family_name

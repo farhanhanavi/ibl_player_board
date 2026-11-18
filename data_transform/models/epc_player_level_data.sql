@@ -5,15 +5,17 @@
         )
 }}
 
-
 /*
-  epc_player_level_data
+  epc_player_level_data  (player fact table)
   ---------------------
-  Spec   : specs/player_metrics_v1.yml -> planned_models.epc_player_level_data
+  Spec   : 
   Source : raw_matchdata -> data -> 'tm' -> '<n>' -> 'pl' -> '<pno>'
   Grain  : one row per player per match (DNP rows kept, did_play = false)
-  Key    : player_key = same MD5 as epc_player_photos (team + first + family name),
-           because pno is only unique inside one match.
+  Keys   : team_id    <- epc_team_profile   (join on team name)
+           player_key <- epc_player_photos  (join on player name)
+           Profile attributes (shirt number, position, photo, full names) live in the
+           profile tables, not here.
+  pno    : player number inside one match; links to shot[] and pbp in the same match.
 */
 
 WITH base AS (
@@ -21,11 +23,11 @@ WITH base AS (
     SELECT
         r.match_id,
         r.game_season,
-        (r.data ->> 'match_date')::DATE     AS match_date,
-		(r.data ->> 'venue')	    	 	AS venue,
-		(r.data -> 'tm' -> '1' ->> 'name')  AS home_team,
-        (r.data -> 'tm' -> '2' ->> 'name')  AS away_team,
-        r.data                              AS j
+        (r.data ->> 'match_date')::DATE         AS match_date,
+        (r.data ->> 'venue')                    AS venue,
+        (r.data -> 'tm' -> '1' ->> 'name')      AS home_team,
+        (r.data -> 'tm' -> '2' ->> 'name')      AS away_team,
+        r.data                                  AS j
     FROM
         -- {{ source('source_raw_matchdata', 'raw_matchdata') }} r
 		public.raw_matchdata r
@@ -40,13 +42,12 @@ sides AS (
         base.match_id,
         base.game_season,
         base.match_date,
-		base.venue,
-		base.home_team,
-		base.away_team,
-		t.value ->> 'name'                  AS team_name,
-        t.value ->> 'code'                  AS team_abr,
-        t.key                               AS team_no,
-        t.value -> 'pl'                     AS pl
+        base.venue,
+        base.home_team,
+        base.away_team,
+        t.value ->> 'name'                      AS team_name,       -- raw, same as epc_team_level_data / epc_shot_level_data
+        t.key                                   AS team_no,         -- '1' = home, '2' = away
+        t.value -> 'pl'                         AS pl
     FROM
         base
     CROSS JOIN
@@ -60,12 +61,11 @@ players AS (
         s.match_id,
         s.game_season,
         s.match_date,
-		s.venue,
-		s.home_team,
-		s.away_team,
-		s.team_abr,
+        s.venue,
+        s.home_team,
+        s.away_team,
         s.team_name,
-        s.team_no,        
+        p.key::INT                                                          AS pno,
         p.value ->> 'name'                                                  AS player_name,
         (COALESCE(NULLIF(p.value ->> 'starter', ''), '0')::INT = 1)         AS is_starter,
 
@@ -114,13 +114,17 @@ players AS (
 )
 
 SELECT
+    pp.player_id,
+    tp.team_id,
     p.match_id,
-	p.game_season,
+    p.game_season,
     p.match_date,
-	p.venue,
-	p.home_team,
-	p.away_team,
+    p.venue,
+    p.home_team,
+    p.away_team,
     p.team_name,
+    p.opp_team_name,
+    p.pno,
     p.player_name,
     p.is_starter,
     (p.minutes_played > 0)                          AS did_play,
@@ -133,11 +137,15 @@ SELECT
     p.feed_eff, p.feed_game_score, p.feed_pir
 FROM
     players p
-INNER JOIN
-    sides o
-    ON  o.match_id = p.match_id
-    AND o.team_no <> p.team_no
+LEFT JOIN
+    -- {{ ref('epc_team_profile') }} tp
+	dbt_schema.epc_team_profile tp
+    ON LOWER(tp.team_name) = LOWER(TRIM(p.team_name))
+LEFT JOIN
+    -- {{ ref('epc_player_profile') }} pp
+	dbt_schema.epc_player_profile pp
+    ON LOWER(pp.player_name) = LOWER(p.player_name)
 ORDER BY
     p.match_id,
-	p.team_name,
-	player_name
+    p.team_name,
+    p.player_name
