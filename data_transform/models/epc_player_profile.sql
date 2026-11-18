@@ -74,23 +74,33 @@ ranked AS (
     WHERE
         team_abr IS NOT NULL
 
+),
+dedup AS (
+
+    SELECT
+        MD5(team_abr || '|' || LOWER(first_name) || '|' || LOWER(family_name)) AS player_id,
+        team_id,
+        team_name,
+        team_abr,
+        first_name,
+        family_name,
+        player_name,
+        shirt_number,
+        position,
+        photo_url,
+        photo_thumb_url,
+        ROW_NUMBER() OVER(PARTITION BY (player_name, family_name) ORDER BY (photo_url IS NULL)) AS dedup_no
+    FROM
+        ranked
+    WHERE
+        rn = 1
+    ORDER BY
+        team_abr,
+        family_name
 )
-SELECT DISTINCT
-    MD5(team_abr || '|' || LOWER(first_name) || '|' || LOWER(family_name)) AS player_id,
-    team_id,
-    team_name,
-    team_abr,
-    first_name,
-    family_name,
-    player_name,
-    shirt_number,
-    position,
-    photo_url,
-    photo_thumb_url
-FROM
-    ranked
+SELECT
+    *
+FROM 
+    dedup
 WHERE
-    rn = 1
-ORDER BY
-    team_abr,
-    family_name
+    dedup_no = 1
