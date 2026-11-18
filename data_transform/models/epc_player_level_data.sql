@@ -123,7 +123,6 @@ SELECT
     p.home_team,
     p.away_team,
     p.team_name,
-    p.opp_team_name,
     p.pno,
     p.player_name,
     p.is_starter,
