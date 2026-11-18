@@ -43,6 +43,7 @@ player_rows AS (
     SELECT
         teams.match_id,
         teams.match_date,
+        tp.team_id,
 		tp.team_name,
 		tp.team_abr,
         
