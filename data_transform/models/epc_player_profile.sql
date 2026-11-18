@@ -43,9 +43,9 @@ player_rows AS (
     SELECT
         teams.match_id,
         teams.match_date,
-		--tp.team_name,
-		--tp.team_name
-		--tp.team_abr,
+		tp.team_name,
+		tp.team_name
+		tp.team_abr,
         
         TRIM(p.value ->> 'firstName')                   AS first_name,
         TRIM(p.value ->> 'familyName')                  AS family_name,
