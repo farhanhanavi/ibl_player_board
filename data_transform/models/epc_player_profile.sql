@@ -1,7 +1,7 @@
 {{
     config(
             materialized = 'table',
-            alias        = 'epc_player_photos'
+            alias        = 'epc_player_profile'
         )
 }}
 
@@ -18,13 +18,12 @@ WITH base AS (
         (r.data ->> 'match_date')::DATE     AS match_date,
         r.data                              AS j
     FROM
-        {{ source('source_raw_matchdata', 'raw_matchdata') }} r
-		-- public.raw_matchdata r
+        -- {{ source('source_raw_matchdata', 'raw_matchdata') }} r
+		public.raw_matchdata r
     WHERE
         r.game_season = 'elite_pro_championship_2026'
 
 ),
-
 teams AS (
 
     SELECT
@@ -39,14 +38,15 @@ teams AS (
         LATERAL jsonb_each(base.j -> 'tm') AS t (key, value)
 
 ),
-
-player_photos AS (
+player_rows AS (
 
     SELECT
         teams.match_id,
         teams.match_date,
-		teams.team_name,
-        teams.team_abr,
+		--tp.team_name,
+		--tp.team_name
+		--tp.team_abr,
+        
         TRIM(p.value ->> 'firstName')                   AS first_name,
         TRIM(p.value ->> 'familyName')                  AS family_name,
         p.value ->> 'name'                              AS player_name,
@@ -56,6 +56,10 @@ player_photos AS (
         NULLIF(p.value ->> 'photoT', '')                AS photo_thumb_url
     FROM
         teams
+	INNER JOIN
+		--{{ ref('epc_team_profile') }} tp
+		dbt_schema.
+		ON LOWER(tp.team_name) = LOWER(teams.team_name)
     CROSS JOIN
         LATERAL jsonb_each(teams.pl) AS p (key, value)
 
@@ -75,6 +79,8 @@ final AS (
 
     SELECT
         MD5(team_abr || '|' || LOWER(first_name) || '|' || LOWER(family_name)) AS player_key,
+		team_id,
+		team_name,
         team_abr,
         first_name,
         family_name,
@@ -84,8 +90,6 @@ final AS (
         photo_url,
         photo_thumb_url,
         ROW_NUMBER() OVER (PARTITION BY player_name ORDER BY LENGTH(first_name) DESC) AS dedup_rn
-        --match_id        AS source_match_id,
-        --match_date      AS source_match_date
     FROM
         ranked
     WHERE
@@ -96,6 +100,8 @@ final AS (
 )
 SELECT
     player_key,
+	team_id,
+	team_name,
     team_abr,
     first_name,
     family_name,
