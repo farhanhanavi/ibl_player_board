@@ -1,7 +1,7 @@
 {{
     config(
             materialized = 'table',
-            alias        = 'epc_shot_level_data'
+            alias        = 'epc_player_shot_data'
         )
 }}
 
