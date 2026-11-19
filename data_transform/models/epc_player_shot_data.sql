@@ -5,21 +5,41 @@
         )
 }}
 
+
+/*
+  epc_shot_level_data
+  -------------------
+  Spec   : specs/team_metrics_v2_1.yml -> planned_models.epc_shot_level_data
+           specs/player_metrics_v1.yml  -> metrics.player_shot_zones (shot_zone, v1.2)
+  Source : raw_matchdata -> data -> 'tm' -> '<n>' -> 'shot' (array)
+  Grain  : one row per field-goal attempt (free throws are not in shot[])
+
+  Court  : feed x / y are a 0-100 grid. x runs along the 28 m length, y along the 15 m width.
+           Every shot is mirrored onto the LEFT basket (nearest hoop), in metres:
+             court_x_m = 0 at the baseline .. 14 at half court
+             court_y_m = 0 .. 15 sideline to sideline (rotated 180 deg, so left/right is kept)
+           Basket centre = (1.575, 7.5).
+
+  Zones  : one shot_zone per attempt. 2pt / 3pt comes from the feed (shot_type), never from
+           distance; geometry only splits shots inside each group.
+             Corner 3        : 3pt and court_x_m <= 2.99 (where the straight corner line meets the arc)
+             ATB             : any other 3pt (above the break)
+             Restricted Area : 2pt within 1.25 m of the basket centre
+             Paint Area      : other 2pt inside the key (5.8 m from baseline, 4.9 m wide)
+             Midrange        : every other 2pt (outside the paint)
+*/
+
 WITH base AS (
 
     SELECT
-		r.match_id,
-		r.game_season,
-		(r.data ->> 'match_date')::DATE		AS match_date,
-		r.data ->> 'venue'                    	AS venue,
-		r.data -> 'tm' -> '1' ->> 'name'      AS home_team,
-		r.data -> 'tm' -> '2' ->> 'name'      AS away_team,
-		r.data              AS j
-	FROM
-		-- {{ source('source_raw_matchdata', 'raw_matchdata') }} r
-		public.raw_matchdata r
-	WHERE
-		r.game_season = 'elite_pro_championship_2026'
+        r.match_id,
+        r.game_season,
+        r.data              AS j
+    FROM
+        -- {{ source('source_raw_matchdata', 'raw_matchdata') }} r
+        public.raw_matchdata r
+    WHERE
+        r.game_season = 'elite_pro_championship_2026'
 
 ),
 sides AS (
@@ -27,10 +47,6 @@ sides AS (
     SELECT
         base.match_id,
         base.game_season,
-		base.match_date,
-		base.venue,
-		base.home_team,
-		base.away_team,
         t.key               AS team_no,
         t.value             AS tm
     FROM
@@ -39,26 +55,19 @@ sides AS (
         LATERAL jsonb_each(base.j -> 'tm') AS t (key, value)
 
 ),
-
 shots AS (
 
     SELECT
         s.match_id,
         s.game_season,
-		s.match_date,
-		s.venue,
-		s.home_team,
-		s.away_team,
-		s.tm ->> 'name'                         AS team_name,
         s.tm ->> 'code'                         AS team_abr,
-		(sh ->> 'pno')::INT                     AS pno,
-		pp.player_id,
-		pp.player_name,
-        --sh ->> 'player'                         AS player_name,
+        s.tm ->> 'name'                         AS team_name,
+        (sh ->> 'pno')::INT                     AS pno,
+        p.player_id,
+        p.player_name,
         (sh ->> 'actionNumber')::INT            AS action_number,
         (sh ->> 'per')::INT                     AS period,
         sh ->> 'perType'                        AS period_type,
-        
         sh ->> 'actionType'                     AS shot_type,
         sh ->> 'subType'                        AS shot_subtype,
         (sh ->> 'x')::NUMERIC                   AS x,
@@ -68,9 +77,12 @@ shots AS (
         sides s
     CROSS JOIN
         LATERAL jsonb_array_elements(COALESCE(s.tm -> 'shot', '[]'::JSONB)) AS sh
-	LEFT JOIN
-		dbt_schema.epc_player_profile pp
-		ON LOWER(pp.player_name) = LOWER(sh ->> 'player')
+    LEFT JOIN
+        {{ ref('epc_player_level_data') }} p
+        -- dbt_schema.epc_player_level_data p
+        ON  p.match_id  = s.match_id
+        AND p.team_name = s.tm ->> 'name'
+        AND p.pno       = (sh ->> 'pno')::INT
 
 ),
 halfcourt AS (
@@ -93,6 +105,7 @@ geo AS (
         halfcourt h
 
 )
+
 SELECT
     g.*,
     CASE
@@ -100,9 +113,8 @@ SELECT
         WHEN g.shot_type = '3pt'                                       THEN 'ATB'
         WHEN g.shot_distance_m <= 1.25                                 THEN 'Restricted Area'
         WHEN g.court_x_m <= 5.8 AND g.lateral_m <= 2.45                THEN 'Paint Area'
-        WHEN g.shot_distance_m <= 4.5                                  THEN 'Short Midrange'
-        ELSE                                                                'Long Midrange'
-    END	AS shot_zone
+        ELSE                                                                'Midrange'
+    END                                                                AS shot_zone
 FROM
     geo g
 ORDER BY
