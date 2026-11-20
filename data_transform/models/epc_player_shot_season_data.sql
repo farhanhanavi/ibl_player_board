@@ -5,20 +5,6 @@
         )
 }}
 
-/*
-  v_player_season_shot_zones   (v1.2)
-  --------------------------
-  Spec   : specs/player_shot_zones_v1_2.yml
-  Source : epc_shot_level_data (table alias epc_player_shot_data): one row per shot, already
-           carries player_id (resolved by pno) and shot_zone. No zone logic here.
-           + player_season_level_data: player name, team, games_played, is_qualified.
-  Grain  : one row per season x player x zone: 'All Shots' + 5 zones = 6 rows per player.
-           Zones with 0 attempts are kept as 0, so every chart gets the same 6 rows.
-           Plus 6 LEAGUE rows per season.
-  League : LEAGUE rows sum qualified players only (same global standard as player_season_level_data).
-  Order  : zone_order 0 = All Shots, 1 Restricted Area, 2 Paint Area, 3 Midrange, 4 Corner 3, 5 ATB.
-*/
-
 WITH zones AS (
 
     SELECT *
@@ -45,6 +31,7 @@ players AS (
         ps.is_qualified
     FROM
         {{ ref('epc_player_season_level_data') }} ps
+		-- dbt_schema.epc_player_season_level_data ps
     WHERE
         ps.row_type = 'player'
 
@@ -64,6 +51,7 @@ player_zone AS (
                  ELSE 0 END)                                                         AS pts
     FROM
         {{ ref('epc_player_shot_data') }} s
+		-- dbt_schema.epc_player_shot_data s
     WHERE
         s.player_id IS NOT NULL
     GROUP BY
@@ -132,7 +120,6 @@ stacked AS (
     SELECT * FROM league
 
 ),
-
 metrics AS (
 
     SELECT
@@ -145,36 +132,42 @@ metrics AS (
     FROM
         stacked st
 
-)
+),
+final_data AS (
 
+	SELECT
+	    m.game_season,
+	    m.player_id,
+	    m.row_type,
+	    m.player_name,
+	    m.team_id,
+	    m.team_name,
+	    m.is_qualified,
+	    m.games_played,
+	    m.zone_order,
+	    m.shot_zone,
+	    m.fga,
+	    m.fgm,
+	    m.pts,
+	    m.fga_per_game,
+	    m.fga_share_pct,
+	    m.fg_pct,
+	    m.pts_per_shot,
+	    lg.fga_share_pct                                        AS league_fga_share_pct,
+	    lg.fg_pct                                               AS league_fg_pct,
+	    lg.pts_per_shot                                         AS league_pts_per_shot,
+	    ROUND(m.fga_share_pct - lg.fga_share_pct, 1)            AS fga_share_diff_vs_league,
+	    ROUND(m.fg_pct - lg.fg_pct, 1)                          AS fg_pct_diff_vs_league,       -- NULL when fga = 0
+	    ROUND(m.pts_per_shot - lg.pts_per_shot, 3)              AS pts_per_shot_diff_vs_league
+	FROM
+	    metrics m
+	LEFT JOIN
+	    metrics lg
+	    ON  lg.game_season = m.game_season
+	    AND lg.shot_zone   = m.shot_zone
+	    AND lg.row_type    = 'league'
+)
 SELECT
-    m.game_season,
-    m.player_id,
-    m.row_type,
-    m.player_name,
-    m.team_id,
-    m.team_name,
-    m.is_qualified,
-    m.games_played,
-    m.zone_order,
-    m.shot_zone,
-    m.fga,
-    m.fgm,
-    m.pts,
-    m.fga_per_game,
-    m.fga_share_pct,
-    m.fg_pct,
-    m.pts_per_shot,
-    lg.fga_share_pct                                        AS league_fga_share_pct,
-    lg.fg_pct                                               AS league_fg_pct,
-    lg.pts_per_shot                                         AS league_pts_per_shot,
-    ROUND(m.fga_share_pct - lg.fga_share_pct, 1)            AS fga_share_diff_vs_league,
-    ROUND(m.fg_pct - lg.fg_pct, 1)                          AS fg_pct_diff_vs_league,       -- NULL when fga = 0
-    ROUND(m.pts_per_shot - lg.pts_per_shot, 3)              AS pts_per_shot_diff_vs_league
+	*
 FROM
-    metrics m
-LEFT JOIN
-    metrics lg
-    ON  lg.game_season = m.game_season
-    AND lg.shot_zone   = m.shot_zone
-    AND lg.row_type    = 'league'
+	final_data
