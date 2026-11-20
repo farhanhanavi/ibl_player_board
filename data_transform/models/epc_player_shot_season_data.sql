@@ -1,7 +1,7 @@
 {{
     config(
-            materialized = 'view',
-            alias        = 'v_player_season_shot_zones'
+            materialized = 'table',
+            alias        = 'epc_player_shot_season_data'
         )
 }}
 
