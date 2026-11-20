@@ -44,7 +44,7 @@ players AS (
         ps.games_played,
         ps.is_qualified
     FROM
-        {{ ref('player_season_level_data') }} ps
+        {{ ref('epc_player_season_level_data') }} ps
     WHERE
         ps.row_type = 'player'
 
@@ -63,7 +63,7 @@ player_zone AS (
                  WHEN s.is_made                         THEN 2
                  ELSE 0 END)                                                         AS pts
     FROM
-        {{ ref('epc_shot_level_data') }} s
+        {{ ref('epc_player_shot_data') }} s
     WHERE
         s.player_id IS NOT NULL
     GROUP BY
