@@ -36,8 +36,8 @@ WITH base AS (
         r.game_season,
         r.data              AS j
     FROM
-        -- {{ source('source_raw_matchdata', 'raw_matchdata') }} r
-        public.raw_matchdata r
+        {{ source('source_raw_matchdata', 'raw_matchdata') }} r
+        -- public.raw_matchdata r
     WHERE
         r.game_season = 'elite_pro_championship_2026'
 

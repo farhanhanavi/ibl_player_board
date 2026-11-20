@@ -1,7 +1,7 @@
 {{
     config(
-            materialized = 'view',
-            alias        = 'epc_player_season_totals'
+            materialized = 'table',
+            alias        = 'epc_player_season_level_data'
         )
 }}
 
@@ -47,8 +47,8 @@ team_match AS (
         (t.drb + t.drb_team) + (t.opp_oreb + t.opp_oreb_team)                    AS tm_dreb_avail,
         t.opp_two_pa                                                             AS tm_opp_two_pa
     FROM
-        -- {{ ref('epc_team_level_data') }} t
-		dbt_schema.epc_team_level_data t
+        {{ ref('epc_team_level_data') }} t
+		-- dbt_schema.epc_team_level_data t
     CROSS JOIN
         params p
 
@@ -60,8 +60,8 @@ team_games AS (
 		team_name,
 		COUNT(*) AS team_games
     FROM 
-		-- {{ ref('epc_team_level_data') }}
-		dbt_schema.epc_team_level_data
+		{{ ref('epc_team_level_data') }}
+		-- dbt_schema.epc_team_level_data
     GROUP BY
 		game_season, team_name
 
@@ -83,8 +83,8 @@ player_match AS (
         tm.tm_dreb_avail  * pl.minutes_played / NULLIF(tm.game_minutes, 0)       AS on_dreb_avail,
         tm.tm_opp_two_pa  * pl.minutes_played / NULLIF(tm.game_minutes, 0)       AS on_opp_two_pa
     FROM
-        -- {{ ref('epc_player_level_data') }} pl
-		dbt_schema.epc_player_level_data pl
+        {{ ref('epc_player_level_data') }} pl
+		-- dbt_schema.epc_player_level_data pl
     INNER JOIN
         team_match tm
         ON  tm.match_id = pl.match_id
