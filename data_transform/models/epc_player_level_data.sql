@@ -6,16 +6,23 @@
 }}
 
 /*
-  epc_player_level_data  (player fact table)
+  epc_player_level_data   (player fact table)
   ---------------------
-  Spec   : 
+  Layer  : staging (fact)
+  Spec   : specs/epc_metrics_spec.yml -> staging_columns.epc_player_level_data, identity.player
   Source : raw_matchdata -> data -> 'tm' -> '<n>' -> 'pl' -> '<pno>'
-  Grain  : one row per player per match (DNP rows kept, did_play = false)
-  Keys   : team_id    <- epc_team_profile   (join on team name)
-           player_key <- epc_player_photos  (join on player name)
-           Profile attributes (shirt number, position, photo, full names) live in the
-           profile tables, not here.
-  pno    : player number inside one match; links to shot[] and pbp in the same match.
+  Grain  : one row per player entry per match.
+           DNP rows are kept (did_play = FALSE). Duplicate entries of the same player in one match
+           are kept too (is_primary = FALSE), so a shot recorded on their pno still finds the player.
+  Keys   : team_id     <- epc_team_profile (join on LOWER(TRIM(team_name)))
+           player_id   =  MD5(team_id | shirt_number), the same key as epc_player_mapping.
+                          No name matching: the feed spells names differently between matches.
+  Names  : player_name      = canonical name from epc_player_profile (same in every match)
+           feed_player_name = the spelling used in this match
+  Dedup  : is_primary = one entry per player per match: most minutes, then most fields filled,
+           then lowest pno. Season models use only did_play AND is_primary rows.
+  pno    : player number inside one match only; links pl, shot[] and pbp within that match.
+  Feeds  : epc_player_season_level_data, epc_player_shot_data
 */
 
 WITH base AS (
@@ -45,7 +52,7 @@ sides AS (
         base.venue,
         base.home_team,
         base.away_team,
-        t.value ->> 'name'                      AS team_name,       -- raw, same as epc_team_level_data / epc_shot_level_data
+        t.value ->> 'name'                      AS team_name,       -- raw feed name, same as epc_team_level_data / epc_player_shot_data (join key)
         t.key                                   AS team_no,         -- '1' = home, '2' = away
         t.value -> 'pl'                         AS pl
     FROM
@@ -65,8 +72,11 @@ players AS (
         s.home_team,
         s.away_team,
         s.team_name,
+        CASE WHEN s.team_no = '1' THEN s.away_team ELSE s.home_team END     AS opp_team_name,
         p.key::INT                                                          AS pno,
-        p.value ->> 'name'                                                  AS player_name,
+        TRIM(p.value ->> 'name')                                            AS player_name,
+        NULLIF(TRIM(p.value ->> 'shirtNumber'), '')                         AS shirt_number,
+        (SELECT COUNT(*) FROM jsonb_object_keys(p.value))                   AS n_fields,      -- complete entry ~51
         (COALESCE(NULLIF(p.value ->> 'starter', ''), '0')::INT = 1)         AS is_starter,
 
         p.value ->> 'sMinutes'                                              AS minutes,
@@ -112,9 +122,8 @@ players AS (
         LATERAL jsonb_each(s.pl) AS p (key, value)
 
 )
-
 SELECT
-    pp.player_id,
+    MD5(tp.team_id || '|' || p.shirt_number)        AS player_id,
     tp.team_id,
     p.match_id,
     p.game_season,
@@ -123,8 +132,15 @@ SELECT
     p.home_team,
     p.away_team,
     p.team_name,
+    p.opp_team_name,
     p.pno,
-    p.player_name,
+    p.shirt_number,
+    COALESCE(pp.player_name, p.player_name)         AS player_name,        -- one display name per player
+    p.player_name                                   AS feed_player_name,   -- spelling in this match
+    ROW_NUMBER() OVER (
+        PARTITION BY p.match_id, tp.team_id, p.shirt_number
+        ORDER BY p.minutes_played DESC, p.n_fields DESC, p.pno
+    ) = 1                                           AS is_primary,
     p.is_starter,
     (p.minutes_played > 0)                          AS did_play,
     p.minutes,
@@ -143,8 +159,8 @@ LEFT JOIN
 LEFT JOIN
     {{ ref('epc_player_profile') }} pp
 	-- dbt_schema.epc_player_profile pp
-    ON LOWER(pp.player_name) = LOWER(p.player_name)
+    ON pp.player_id = MD5(tp.team_id || '|' || p.shirt_number)
 ORDER BY
     p.match_id,
     p.team_name,
-    p.player_name
+    p.pno

@@ -5,28 +5,29 @@
         )
 }}
 
-
 /*
-  epc_shot_level_data
-  -------------------
-  Spec   : specs/team_metrics_v2_1.yml -> planned_models.epc_shot_level_data
-           specs/player_metrics_v1.yml  -> metrics.player_shot_zones (shot_zone, v1.2)
+  epc_player_shot_data
+  --------------------
+  Layer  : staging
+  Spec   : specs/epc_metrics_spec.yml -> shot_zones, staging_columns.epc_player_shot_data
   Source : raw_matchdata -> data -> 'tm' -> '<n>' -> 'shot' (array)
+           + epc_player_level_data (player_id via match_id + team_name + pno, all entries)
   Grain  : one row per field-goal attempt (free throws are not in shot[])
 
   Court  : feed x / y are a 0-100 grid. x runs along the 28 m length, y along the 15 m width.
            Every shot is mirrored onto the LEFT basket (nearest hoop), in metres:
              court_x_m = 0 at the baseline .. 14 at half court
-             court_y_m = 0 .. 15 sideline to sideline (rotated 180 deg, so left/right is kept)
+             court_y_m = 0 .. 15 sideline to sideline (rotated 180 deg, so left / right is kept)
            Basket centre = (1.575, 7.5).
 
   Zones  : one shot_zone per attempt. 2pt / 3pt comes from the feed (shot_type), never from
-           distance; geometry only splits shots inside each group.
+           distance; geometry only splits shots inside each group. First match wins:
              Corner 3        : 3pt and court_x_m <= 2.99 (where the straight corner line meets the arc)
              ATB             : any other 3pt (above the break)
              Restricted Area : 2pt within 1.25 m of the basket centre
-             Paint Area      : other 2pt inside the key (5.8 m from baseline, 4.9 m wide)
+             Paint Area      : other 2pt inside the key (5.8 m from the baseline, 4.9 m wide)
              Midrange        : every other 2pt (outside the paint)
+  Feeds  : epc_player_shot_season_data, shot chart
 */
 
 WITH base AS (
@@ -63,8 +64,8 @@ shots AS (
         s.tm ->> 'code'                         AS team_abr,
         s.tm ->> 'name'                         AS team_name,
         (sh ->> 'pno')::INT                     AS pno,
-        p.player_id,
-        p.player_name,
+        pl.player_id,
+        pl.player_name,
         (sh ->> 'actionNumber')::INT            AS action_number,
         (sh ->> 'per')::INT                     AS period,
         sh ->> 'perType'                        AS period_type,
@@ -78,11 +79,11 @@ shots AS (
     CROSS JOIN
         LATERAL jsonb_array_elements(COALESCE(s.tm -> 'shot', '[]'::JSONB)) AS sh
     LEFT JOIN
-        {{ ref('epc_player_level_data') }} p
-        -- dbt_schema.epc_player_level_data p
-        ON  p.match_id  = s.match_id
-        AND p.team_name = s.tm ->> 'name'
-        AND p.pno       = (sh ->> 'pno')::INT
+        {{ ref('epc_player_level_data') }} pl
+        -- dbt_schema.epc_player_level_data pl
+        ON  pl.match_id  = s.match_id
+        AND pl.team_name = s.tm ->> 'name'
+        AND pl.pno       = (sh ->> 'pno')::INT
 
 ),
 halfcourt AS (

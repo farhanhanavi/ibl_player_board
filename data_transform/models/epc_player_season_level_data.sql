@@ -6,19 +6,22 @@
 }}
 
 /*
-  v_player_season_totals
-  ----------------------
-  Spec   : specs/player_metrics_v1.yml -> planned_models.v_player_season_totals
-  Source : epc_player_level_data (player x match) + epc_team_level_data (team x match)
-           + epc_player_photos (player profile: names, position)
-  Join   : player x team per match on match_id + team_name (no team_abr); team_id from the fact.
-  Grain  : one row per player (player_id = team-specific) per season
-           + one 'LEAGUE' row per season (qualified players only)
-  Qualify: one global, fixed standard for every metric (parameters.qualification):
-           games_played >= min_games AND minutes per game >= min_mpg.
-  Rule   : per match, the player's share of the game (minutes / game minutes) is applied to the
-           team's possessions and team counts ("on-court estimates"). Raw counts and on-court
-           estimates are summed over the season first, then every formula is applied once.
+  epc_player_season_level_data
+  ----------------------------
+  Layer  : mart
+  Spec   : specs/epc_metrics_spec.yml -> player_derived_fields, player_metrics
+  Source : epc_player_level_data (player x match, did_play AND is_primary)
+           + epc_team_level_data (team x match, joined on match_id + team_name)
+  Grain  : one row per player (player_id = team + shirt number) per season
+           + one LEAGUE row per season (player_id = 'LEAGUE', qualified players only)
+  Qualify: one fixed standard for every metric: games_played >= 3 AND minutes per game >= 10.0.
+           Unqualified players keep their values; only the LEAGUE row is limited to qualified players.
+  Rule   : the feed has no player possessions. Per match, court_share = player minutes / game
+           minutes is applied to the team's possessions and team counts ("on-court estimates").
+           Raw counts and on-court estimates are summed over the season first, then every
+           formula is applied once.
+  Output : season totals, on-court estimates, PIR, Game Score and the 34 player metrics (A-F).
+  Feeds  : epc_player_shot_season_data
 */
 
 WITH params AS (
@@ -31,7 +34,7 @@ WITH params AS (
 ),
 team_match AS (
 
-    -- Team context per match
+    -- Team context per match: possessions and the team counts that player metrics need
     SELECT
         t.match_id,
         t.team_name,
@@ -91,6 +94,7 @@ player_match AS (
         AND tm.team_name = pl.team_name
     WHERE
         pl.did_play = TRUE
+        AND pl.is_primary
 
 ),
 qualification AS (
@@ -267,7 +271,7 @@ SELECT
     ROUND(100.0 * t.fouls_on / NULLIF(t.player_poss, 0), 1)                                      AS fouls_drawn_per100,    -- own
 
     -- F. Impact & overall
-    ROUND(t.pir / NULLIF(t.games_played, 0), 1)                                                  AS pir_per_game,          -- none
+    ROUND(t.pir::NUMERIC / NULLIF(t.games_played, 0), 1)                                                  AS pir_per_game,          -- none
     ROUND(100.0 * t.pir / NULLIF(t.player_poss_avg, 0), 1)                                       AS pir_per100,            -- game_average
     ROUND(t.game_score / NULLIF(t.games_played, 0), 1)                                           AS game_score_per_game,   -- none
     ROUND(40.0 * t.plus_minus / NULLIF(t.minutes_played, 0), 1)                                  AS plus_minus_per40,      -- none

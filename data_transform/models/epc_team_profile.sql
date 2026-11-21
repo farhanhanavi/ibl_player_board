@@ -8,13 +8,16 @@
 /*
   epc_team_profile
   ----------------
-  Source   : raw_matchdata -> data -> 'tm' -> '1' / '2'
-  Grain    : one row per team (the latest non-empty logo seen in the season)
-  Key      : team_id = MD5 of the normalized team name. The feed has no team id, and
-             team codes (team_abr) can collide when the league expands, so the name is
-             the natural key. Hash = stable: adding a team never changes existing ids.
-  Join     : other models join here on LOWER(TRIM(team_name)) to get team_id.
-  Logos    : logoT = 75x75 thumbnail, logoS = 200x200 standard.
+  Layer  : staging (profile)
+  Spec   : specs/epc_metrics_spec.yml -> identity.team
+  Source : raw_matchdata -> data -> 'tm' -> '1' / '2'
+  Grain  : one row per team
+  Key    : team_id = MD5(LOWER(team_name)). The feed has no team id and team codes (team_abr) can
+           collide as the league expands, so the name is the natural key. The hash is stable:
+           adding a team never changes existing ids. team_abr is a display label only.
+  Join   : other models join here on LOWER(TRIM(team_name)) to get team_id.
+  Pick   : the row with a non-empty logo (logoS = 200x200, logoT = 75x75 thumbnail).
+  Feeds  : epc_player_mapping, epc_player_profile, epc_player_level_data
 */
 
 WITH base AS (

@@ -5,6 +5,17 @@
         )
 }}
 
+/*
+  epc_standing   (file: epc_standings.sql, table alias: epc_standing)
+  ------------
+  Layer  : mart
+  Spec   : specs/epc_metrics_spec.yml -> standings
+  Source : epc_team_level_data
+  Grain  : one row per team
+  Points : FIBA table points = 2 per win + 1 per loss.
+  Order  : wins, then total points scored (not FIBA head-to-head tie-breaks).
+*/
+
 WITH cte AS (
 
 	SELECT
@@ -18,9 +29,6 @@ WITH cte AS (
 		-- dbt_schema.epc_team_level_data
 	GROUP BY
 		1
-	ORDER BY
-		game_win DESC,
-		total_score DESC
 )
 SELECT
 	cte.team_name,
@@ -30,3 +38,6 @@ SELECT
 	(cte.game_win * 2) + game_lost AS pts
 FROM
 	cte 
+ORDER BY
+	game_win DESC,
+	total_score DESC

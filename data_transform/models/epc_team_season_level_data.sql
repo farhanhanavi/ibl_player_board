@@ -6,16 +6,20 @@
 }}
 
 /*
-  v_team_season_totals
-  --------------------
-  Spec   : specs/team_metrics_v3.yml -> queries.v_team_season_totals (v3.0)
+  epc_team_season_level_data
+  --------------------------
+  Layer  : mart
+  Spec   : specs/epc_metrics_spec.yml -> team_derived_fields, team_metrics
   Source : epc_team_level_data (one row per team per match)
-  Grain  : one row per team per season + one 'LEAGUE' row per season.
-  Rule   : sum raw counts first, then derive. Never average per-match rates,
-           so the per-match pct columns and biggest_lead are not carried here.
-  Output : raw season totals + derived totals + possessions + all v2 metrics
-           (v_team_season_metrics is merged into this view).
-  Feeds  : v_team_season_metrics_ranked -> dashboard_team_card, v_team_season_shot_zones
+  Grain  : one row per team per season + one LEAGUE row per season
+           (team_abr = 'LEAGUE', team_name = 'League Average').
+  Rule   : sum raw counts over the season first, then apply every formula once.
+           Per-match feed percentages and biggest_lead are never averaged, so they are not carried.
+  Poss   : poss     = fga - oreb_total + turnovers_total + 0.54 x fta        (own, offensive events)
+           opp_poss = same on the opponent side                             (opponent, defensive events)
+           poss_avg = (poss + opp_poss) / 2                                 (Pace only)
+  Output : season totals, derived totals, possessions and the 34 team metrics (A-F).
+  Note   : still grouped by team_abr (see known_limitations.team_season_keyed_on_team_abr).
 */
 
 WITH params AS (

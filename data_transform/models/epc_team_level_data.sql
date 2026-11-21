@@ -5,6 +5,31 @@
         ) 
 }}
 
+/*
+  epc_team_level_data
+  -------------------
+  Layer  : staging
+  Spec   : specs/epc_metrics_spec.yml -> staging_columns.epc_team_level_data
+  Source : raw_matchdata -> data -> 'tm' -> '1' / '2'
+  Grain  : one row per team per match. Every team column also appears as opp_<column> for the
+           opponent in the same match (exception: assists -> opp_assist).
+  Notes  : - minutes_played = tot_sMinutes / 5 players = game length (40, 45 one OT, 50 two OT).
+           - is_win = this team's full_score > the opponent's full_score.
+           - Missing JSON values become 0 (COALESCE(NULLIF(x, ''), 0)).
+           - The per-match feed percentages (two_pct, three_pct, fg_pct, ft_pct) and biggest_lead
+             are kept for reference only; season models never average them.
+           - Player-credited vs team-credited (v4.1 fix):
+               oreb, drb, turnovers, fouls_personal = SUM of the players' own box-score lines
+               oreb_team, drb_team, turnovers_team, fouls_team = team-credited, from the feed
+               -> total = player + team (built in epc_team_season_level_data).
+             The feed's tot_sReboundsOffensive / tot_sReboundsDefensive already INCLUDE the team-
+             credited rebounds (match 2783645, BHB: 11 player + 2 team = 13), so adding oreb_team to
+             them counted team rebounds twice. Summing the players removes the double count and does
+             not depend on how the feed builds tot_sTurnovers / tot_sFoulsPersonal.
+             One entry per shirt number per match is summed (same rule as epc_player_level_data.is_primary).
+           - total_rebound stays the feed total (player + team rebounds); no metric uses it.
+  Feeds  : epc_team_season_level_data, epc_player_season_level_data, epc_standing
+*/
 
 WITH base AS (
 
@@ -20,6 +45,51 @@ WITH base AS (
 
 ),
 
+-- Player-credited counts: one entry per shirt number per match (duplicate entries are skipped,
+-- same rule as epc_player_level_data.is_primary), then summed per team side.
+player_entries AS (
+
+    SELECT
+        base.match_id,
+        t.key                                                                   AS team_no,
+        COALESCE(NULLIF(p.value ->> 'sReboundsOffensive', '')::INT, 0)          AS oreb,
+        COALESCE(NULLIF(p.value ->> 'sReboundsDefensive', '')::INT, 0)          AS drb,
+        COALESCE(NULLIF(p.value ->> 'sTurnovers', '')::INT, 0)                  AS turnovers,
+        COALESCE(NULLIF(p.value ->> 'sFoulsPersonal', '')::INT, 0)              AS fouls_personal,
+        ROW_NUMBER() OVER (
+            PARTITION BY base.match_id, t.key, NULLIF(TRIM(p.value ->> 'shirtNumber'), '')
+            ORDER BY
+                  COALESCE(NULLIF(SPLIT_PART(p.value ->> 'sMinutes', ':', 1), '')::NUMERIC, 0)
+                + COALESCE(NULLIF(SPLIT_PART(p.value ->> 'sMinutes', ':', 2), '')::NUMERIC, 0) / 60.0 DESC,
+                (SELECT COUNT(*) FROM jsonb_object_keys(p.value)) DESC,
+                p.key::INT
+        )                                                                       AS rn
+    FROM
+        base
+    CROSS JOIN
+        LATERAL jsonb_each(base.j -> 'tm') AS t (key, value)
+    CROSS JOIN
+        LATERAL jsonb_each(t.value -> 'pl') AS p (key, value)
+
+),
+player_sums AS (
+
+    SELECT
+        match_id,
+        team_no,
+        SUM(oreb)                                                               AS oreb,
+        SUM(drb)                                                                AS drb,
+        SUM(turnovers)                                                          AS turnovers,
+        SUM(fouls_personal)                                                     AS fouls_personal
+    FROM
+        player_entries
+    WHERE
+        rn = 1
+    GROUP BY
+        match_id, team_no
+
+),
+
 -- One row per team side ('1' / '2')
 sides AS (
 
@@ -32,11 +102,19 @@ sides AS (
         (base.j -> 'tm' -> '1' ->> 'name')  AS home_team,
         (base.j -> 'tm' -> '2' ->> 'name')  AS away_team,
         t.key                               AS team_no,
-        t.value                             AS tm
+        t.value                             AS tm,
+        COALESCE(ps.oreb, 0)                AS player_oreb,
+        COALESCE(ps.drb, 0)                 AS player_drb,
+        COALESCE(ps.turnovers, 0)           AS player_turnovers,
+        COALESCE(ps.fouls_personal, 0)      AS player_fouls_personal
     FROM
         base
     CROSS JOIN
         LATERAL jsonb_each(base.j -> 'tm') AS t (key, value)
+    LEFT JOIN
+        player_sums ps
+        ON  ps.match_id = base.match_id
+        AND ps.team_no  = t.key
 
 ),
 team_side AS (
@@ -94,15 +172,15 @@ team_side AS (
 
         COALESCE(NULLIF(tm ->> 'tot_sAssists', '')::INT, 0)                     AS assists,
 
-        COALESCE(NULLIF(tm ->> 'tot_sReboundsTotal', '')::INT, 0)               AS total_rebound,
-        COALESCE(NULLIF(tm ->> 'tot_sReboundsDefensive', '')::INT, 0)           AS drb,
-        COALESCE(NULLIF(tm ->> 'tot_sReboundsOffensive', '')::INT, 0)           AS oreb,
+        COALESCE(NULLIF(tm ->> 'tot_sReboundsTotal', '')::INT, 0)               AS total_rebound,    -- feed total, includes team rebounds
+        player_drb                                                              AS drb,              -- player-credited only (team part: drb_team)
+        player_oreb                                                             AS oreb,             -- player-credited only (team part: oreb_team)
         COALESCE(NULLIF(tm ->> 'tot_sReboundsTeamDefensive', '')::INT, 0)       AS drb_team,
         COALESCE(NULLIF(tm ->> 'tot_sReboundsTeamOffensive', '')::INT, 0)       AS oreb_team,
 
-        COALESCE(NULLIF(tm ->> 'tot_sTurnovers', '')::INT, 0)                   AS turnovers,
+        player_turnovers                                                        AS turnovers,        -- player-credited only (team part: turnovers_team)
         COALESCE(NULLIF(tm ->> 'tot_sTurnoversTeam', '')::INT, 0)               AS turnovers_team,
-        COALESCE(NULLIF(tm ->> 'tot_sFoulsPersonal', '')::INT, 0)               AS fouls_personal,
+        player_fouls_personal                                                   AS fouls_personal,   -- player-credited only (team part: fouls_team)
         COALESCE(NULLIF(tm ->> 'tot_sFoulsTeam', '')::INT, 0)                   AS fouls_team,
         COALESCE(NULLIF(tm ->> 'tot_sFoulsOn', '')::INT, 0)                     AS fouls_on,
         COALESCE(NULLIF(tm ->> 'tot_sSteals', '')::INT, 0)                      AS steals,

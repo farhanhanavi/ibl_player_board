@@ -5,6 +5,23 @@
         )
 }}
 
+/*
+  epc_player_shot_season_data
+  ---------------------------
+  Layer  : mart
+  Spec   : specs/epc_metrics_spec.yml -> shot_zones
+  Source : epc_player_shot_data (shots with shot_zone)
+           + epc_player_season_level_data (player list, games_played, is_qualified)
+  Grain  : one row per player per season x 6 zone rows (zone_order 0 = All Shots, 1-5 = zones),
+           zeros kept where he took no shot, plus LEAGUE rows per zone.
+  League : LEAGUE rows sum the shots of qualified players only (same standard as the player season).
+  Metrics: fga_per_game  = fga / games_played (LEAGUE: per qualified player-game)
+           fga_share_pct = 100 x zone fga / All Shots fga
+           fg_pct        = 100 x fgm / fga (NULL when fga = 0)
+           pts_per_shot  = pts / fga (made 2pt x 2 + made 3pt x 3; free throws excluded)
+           *_vs_league   = player value minus the LEAGUE value for the same zone
+*/
+
 WITH zones AS (
 
     SELECT *
